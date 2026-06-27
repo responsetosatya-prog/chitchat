@@ -14,7 +14,14 @@ const db = require('./database');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ 
+    server,
+    // Handle upgrade requests
+    verifyClient: (info, cb) => {
+        // Allow all connections - we'll handle auth in the message
+        cb(true);
+    }
+});
 
 // Middleware
 app.use(cors());
@@ -55,56 +62,74 @@ db.initDatabase();
 db.createTables();
 
 // Store WebSocket connections
-const clients = new Map(); // userId -> { ws, userId, username }
-
-// Online users tracking
+const clients = new Map();
 const onlineUsers = new Set();
 
 wss.on('connection', (ws) => {
     console.log('🔗 New WebSocket connection');
     let userId = null;
     let username = null;
+    let isAuthenticated = false;
 
     ws.on('message', async (message) => {
         try {
             const data = JSON.parse(message);
             console.log('📨 Received:', data.type);
 
+            // Handle authentication
             if (data.type === 'auth') {
-                const token = data.token;
+                console.log('🔐 Auth attempt with token:', data.token ? 'Token present' : 'No token');
+                
+                if (!data.token) {
+                    ws.send(JSON.stringify({
+                        type: 'auth_error',
+                        message: 'No token provided'
+                    }));
+                    return;
+                }
+
                 try {
-                    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+                    const decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'secret');
                     userId = decoded.userId;
-                    username = decoded.username;
+                    username = decoded.username || 'User';
                     
                     // Store connection
-                    clients.set(userId, { ws, userId, username });
+                    clients.set(userId, ws);
                     onlineUsers.add(userId);
+                    isAuthenticated = true;
                     
-                    console.log(`✅ User ${username} (${userId}) connected`);
+                    console.log(`✅ User ${username} (${userId}) authenticated`);
                     
                     // Send auth success
                     ws.send(JSON.stringify({
                         type: 'auth_success',
-                        user: { id: userId, username }
+                        user: { id: userId, username: username },
+                        onlineUsers: Array.from(onlineUsers)
                     }));
                     
                     // Broadcast online status to ALL connected clients
-                    broadcastUserStatus(userId, username, 'online');
+                    broadcastToAll({
+                        type: 'user_status',
+                        userId: userId,
+                        username: username,
+                        status: 'online',
+                        onlineUsers: Array.from(onlineUsers)
+                    });
                     
                 } catch (error) {
-                    console.error('❌ Auth error:', error);
+                    console.error('❌ Auth error:', error.message);
                     ws.send(JSON.stringify({
                         type: 'auth_error',
-                        message: 'Invalid token'
+                        message: 'Invalid token: ' + error.message
                     }));
                     ws.close();
                 }
                 return;
             }
 
-            // Handle other messages (only if authenticated)
-            if (!userId || !clients.has(userId)) {
+            // Handle all other messages - require authentication
+            if (!isAuthenticated) {
+                console.log('⚠️ Unauthenticated message received');
                 ws.send(JSON.stringify({
                     type: 'error',
                     message: 'Not authenticated'
@@ -112,6 +137,7 @@ wss.on('connection', (ws) => {
                 return;
             }
 
+            // Handle different message types
             switch(data.type) {
                 case 'private_message':
                     console.log(`💬 Private message from ${username} to ${data.receiverId}`);
@@ -141,15 +167,15 @@ wss.on('connection', (ws) => {
                         };
                         
                         // Send to receiver if online
-                        const receiver = clients.get(data.receiverId);
-                        if (receiver && receiver.ws.readyState === WebSocket.OPEN) {
-                            receiver.ws.send(JSON.stringify(messageData));
+                        const receiverWs = clients.get(data.receiverId);
+                        if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
+                            receiverWs.send(JSON.stringify(messageData));
                             console.log(`✅ Message sent to ${data.receiverId}`);
                         } else {
                             console.log(`⚠️ Receiver ${data.receiverId} is offline`);
                         }
                         
-                        // Send back to sender (delivery confirmation)
+                        // Send back to sender
                         ws.send(JSON.stringify({
                             ...messageData,
                             delivered: true
@@ -184,20 +210,16 @@ wss.on('connection', (ws) => {
                             created_at: savedGroupMsg.created_at
                         };
                         
-                        // Broadcast to all group members (simplified - broadcast to all clients)
-                        clients.forEach((client) => {
-                            if (client.ws.readyState === WebSocket.OPEN) {
-                                client.ws.send(JSON.stringify(groupMessageData));
-                            }
-                        });
+                        // Broadcast to all connected clients
+                        broadcastToAll(groupMessageData);
                         console.log(`✅ Group message broadcast to all clients`);
                     }
                     break;
 
                 case 'typing':
-                    const receiverClient = clients.get(data.receiverId);
-                    if (receiverClient && receiverClient.ws.readyState === WebSocket.OPEN) {
-                        receiverClient.ws.send(JSON.stringify({
+                    const receiverWs = clients.get(data.receiverId);
+                    if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
+                        receiverWs.send(JSON.stringify({
                             type: 'typing',
                             userId: userId,
                             username: username,
@@ -211,16 +233,25 @@ wss.on('connection', (ws) => {
                     if (userId) {
                         onlineUsers.delete(userId);
                         clients.delete(userId);
-                        broadcastUserStatus(userId, username, 'offline');
+                        broadcastToAll({
+                            type: 'user_status',
+                            userId: userId,
+                            username: username,
+                            status: 'offline',
+                            onlineUsers: Array.from(onlineUsers)
+                        });
                         console.log(`👋 User ${username} logged out`);
                     }
                     break;
+
+                default:
+                    console.log('⚠️ Unknown message type:', data.type);
             }
         } catch (error) {
             console.error('❌ WebSocket error:', error);
             ws.send(JSON.stringify({
                 type: 'error',
-                message: 'Server error'
+                message: 'Server error: ' + error.message
             }));
         }
     });
@@ -229,27 +260,28 @@ wss.on('connection', (ws) => {
         if (userId) {
             onlineUsers.delete(userId);
             clients.delete(userId);
-            broadcastUserStatus(userId, username, 'offline');
+            broadcastToAll({
+                type: 'user_status',
+                userId: userId,
+                username: username || 'Unknown',
+                status: 'offline',
+                onlineUsers: Array.from(onlineUsers)
+            });
             console.log(`🔌 User ${username || userId} disconnected`);
         }
     });
+
+    ws.on('error', (error) => {
+        console.error('❌ WebSocket error:', error);
+    });
 });
 
-// Broadcast user status to all connected clients
-function broadcastUserStatus(userId, username, status) {
-    const statusData = {
-        type: 'user_status',
-        userId: userId,
-        username: username || userId,
-        status: status,
-        onlineUsers: Array.from(onlineUsers)
-    };
-    
-    console.log(`📡 Broadcasting ${status} status for ${username || userId}`);
-    
+// Broadcast to all connected clients
+function broadcastToAll(data) {
+    const message = JSON.stringify(data);
     clients.forEach((client) => {
-        if (client.ws.readyState === WebSocket.OPEN) {
-            client.ws.send(JSON.stringify(statusData));
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
         }
     });
 }
@@ -383,7 +415,6 @@ app.get('/api/users/search', async (req, res) => {
             return res.json({ users: [] });
         }
         const users = await db.searchUsers(q);
-        // Add online status
         const usersWithStatus = users.map(u => ({
             ...u,
             online: onlineUsers.has(u.id)
@@ -416,7 +447,6 @@ app.get('/api/users/:id', async (req, res) => {
 app.get('/api/users/:id/friends', async (req, res) => {
     try {
         const friends = await db.getFriends(req.params.id);
-        // Add online status
         const friendsWithStatus = friends.map(f => ({
             ...f,
             online: onlineUsers.has(f.id)
@@ -529,10 +559,20 @@ app.get('/api/online-users', (req, res) => {
     });
 });
 
+// Health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'online',
+        onlineUsers: onlineUsers.size,
+        connections: clients.size,
+        timestamp: new Date().toISOString()
+    });
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`💕 ChitChat Server Ready`);
-    console.log(`📡 WebSocket server running`);
-    console.log(`👥 Online users: ${onlineUsers.size}`);
+    console.log(`📡 WebSocket server running on ws://localhost:${PORT}`);
+    console.log(`👥 JWT Secret: ${process.env.JWT_SECRET ? 'Set ✅' : 'Using default ⚠️'}`);
 });
