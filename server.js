@@ -20,11 +20,6 @@ const COUPLE_CREDENTIALS = {
     password: process.env.COUPLE_PASSWORD || 'iloveyou2024'
 };
 
-// Generate a unique room code
-function generateCoupleRoom() {
-    return 'LOVE' + crypto.randomBytes(2).toString('hex').toUpperCase();
-}
-
 // Store active connections
 const rooms = new Map();
 
@@ -82,11 +77,11 @@ app.get('/api/rooms/:roomCode/messages', authenticate, async (req, res) => {
 // Create a new room
 app.post('/api/create-room', authenticate, async (req, res) => {
     try {
-        const roomCode = generateCoupleRoom();
-        
+        const roomCode = 'LOVE123'; // Fixed room code
         await db.getPool().query(
             `INSERT INTO rooms (room_code, expires_at) 
-             VALUES ($1, NOW() + INTERVAL '24 hours')`,
+             VALUES ($1, NOW() + INTERVAL '24 hours')
+             ON CONFLICT (room_code) DO NOTHING`,
             [roomCode]
         );
         
@@ -166,6 +161,8 @@ wss.on('connection', (ws, req) => {
                     const roomCode = data.roomCode;
                     clientName = data.name || '💕 Partner';
                     
+                    console.log(`📥 Join request for room: ${roomCode} from ${clientName}`);
+                    
                     // Check if room exists
                     const roomExists = await db.getPool().query(
                         'SELECT room_code FROM rooms WHERE room_code = $1 AND expires_at > NOW()',
@@ -188,6 +185,8 @@ wss.on('connection', (ws, req) => {
                     }
                     rooms.get(roomCode).add(ws);
                     clientRoom = roomCode;
+                    
+                    console.log(`👥 Room ${roomCode} now has ${rooms.get(roomCode).size} users`);
                     
                     // Load recent messages
                     const recentMessages = await db.getRecentMessages(roomCode, 50);
@@ -213,18 +212,21 @@ wss.on('connection', (ws, req) => {
                         }));
                     }
                     
-                    // Notify partner
+                    // Notify OTHERS in the room (not the sender)
                     broadcastToRoom(roomCode, {
                         type: 'system',
-                        message: `💕 Your partner joined the chat!`,
+                        message: `💕 ${clientName} joined the chat!`,
                         sender: 'system'
                     }, ws);
                     
-                    console.log(`💕 Partner joined room: ${roomCode}`);
+                    console.log(`💕 ${clientName} joined room: ${roomCode}`);
                     break;
                     
                 case 'message':
                     if (clientRoom && rooms.has(clientRoom) && isAuthenticated) {
+                        console.log(`📨 Message from ${clientName} in room ${clientRoom}: "${data.text}"`);
+                        
+                        // Save to database
                         const saved = await db.saveMessage(
                             clientRoom,
                             clientName,
@@ -233,12 +235,35 @@ wss.on('connection', (ws, req) => {
                         );
                         
                         if (saved) {
-                            broadcastToRoom(clientRoom, {
+                            // Broadcast to EVERYONE in the room EXCEPT sender
+                            const messageData = {
                                 type: 'message',
                                 text: data.text,
                                 sender: clientName,
                                 time: data.time || new Date().toLocaleTimeString()
-                            }, ws);
+                            };
+                            
+                            console.log(`📤 Broadcasting to room ${clientRoom} (${rooms.get(clientRoom).size} users)`);
+                            
+                            // Send to everyone EXCEPT sender
+                            rooms.get(clientRoom).forEach(client => {
+                                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                                    client.send(JSON.stringify(messageData));
+                                    console.log(`✅ Sent to one client`);
+                                }
+                            });
+                            
+                            // Also send back to sender (for confirmation)
+                            ws.send(JSON.stringify({
+                                type: 'message_delivered',
+                                text: data.text,
+                                time: data.time || new Date().toLocaleTimeString()
+                            }));
+                        } else {
+                            ws.send(JSON.stringify({
+                                type: 'error',
+                                message: 'Failed to save message'
+                            }));
                         }
                     }
                     break;
@@ -269,13 +294,14 @@ function leaveRoom(ws, roomCode, name) {
         
         if (remainingUsers === 0) {
             rooms.delete(roomCode);
-            console.log(`Room ${roomCode} closed`);
+            console.log(`Room ${roomCode} closed (empty)`);
         } else {
             broadcastToRoom(roomCode, {
                 type: 'system',
-                message: `💕 Your partner left the chat`,
+                message: `💕 ${name || 'Someone'} left the chat (${remainingUsers} users remaining)`,
                 sender: 'system'
             });
+            console.log(`${name} left room ${roomCode} (${remainingUsers} users remaining)`);
         }
     }
 }
@@ -284,6 +310,7 @@ function broadcastToRoom(roomCode, data, exclude = null) {
     if (rooms.has(roomCode)) {
         const clients = rooms.get(roomCode);
         const message = JSON.stringify(data);
+        console.log(`📡 Broadcasting to ${clients.size} users in room ${roomCode}`);
         clients.forEach(client => {
             if (client !== exclude && client.readyState === WebSocket.OPEN) {
                 client.send(message);
