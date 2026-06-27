@@ -4,25 +4,21 @@ let pool;
 
 function initDatabase() {
     const connectionString = process.env.DATABASE_URL;
-    
     if (!connectionString) {
         console.error('❌ DATABASE_URL not set!');
-        console.error('💡 Please set DATABASE_URL in your environment variables');
-        process.exit(1);
+        return null;
     }
 
     pool = new Pool({
         connectionString: connectionString,
-        ssl: {
-            rejectUnauthorized: false
-        }
+        ssl: { rejectUnauthorized: false }
     });
 
-    pool.query('SELECT NOW()', (err, res) => {
+    pool.query('SELECT NOW()', (err) => {
         if (err) {
-            console.error('❌ Database connection failed:', err.message);
+            console.error('❌ Database error:', err.message);
         } else {
-            console.log('✅ Database connected successfully');
+            console.log('✅ Database connected');
         }
     });
 
@@ -31,137 +27,85 @@ function initDatabase() {
 
 async function createTables() {
     if (!pool) return;
-
-    const queries = [
-        `CREATE TABLE IF NOT EXISTS rooms (
-            id SERIAL PRIMARY KEY,
-            room_code VARCHAR(10) UNIQUE NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '24 hours'
-        )`,
-        
-        `CREATE TABLE IF NOT EXISTS messages (
-            id SERIAL PRIMARY KEY,
-            room_code VARCHAR(10) NOT NULL,
-            sender VARCHAR(50) NOT NULL,
-            text TEXT NOT NULL,
-            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '24 hours',
-            FOREIGN KEY (room_code) REFERENCES rooms(room_code) ON DELETE CASCADE
-        )`,
-        
-        `CREATE INDEX IF NOT EXISTS idx_messages_room_code ON messages(room_code)`,
-        `CREATE INDEX IF NOT EXISTS idx_messages_time ON messages(time DESC)`,
-        `CREATE INDEX IF NOT EXISTS idx_messages_expires_at ON messages(expires_at)`,
-        `CREATE INDEX IF NOT EXISTS idx_rooms_room_code ON rooms(room_code)`,
-        `CREATE INDEX IF NOT EXISTS idx_rooms_expires_at ON rooms(expires_at)`,
-        
-        `CREATE OR REPLACE FUNCTION delete_expired_messages() 
-         RETURNS void AS $$
-         BEGIN
-             DELETE FROM messages WHERE expires_at < NOW();
-             DELETE FROM rooms WHERE expires_at < NOW();
-         END;
-         $$ LANGUAGE plpgsql;`
-    ];
-
     try {
-        for (const query of queries) {
-            await pool.query(query);
-        }
-        console.log('✅ Database tables created/verified');
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS rooms (
+                room_code VARCHAR(10) PRIMARY KEY,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                room_code VARCHAR(10) REFERENCES rooms(room_code),
+                sender VARCHAR(50),
+                text TEXT,
+                time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('✅ Tables created');
     } catch (error) {
-        console.error('❌ Error creating tables:', error.message);
+        console.error('❌ Table creation error:', error.message);
     }
 }
 
 async function saveMessage(roomCode, sender, text, time) {
     if (!pool) return null;
-
     try {
         await pool.query(
-            `INSERT INTO rooms (room_code, expires_at) 
-             VALUES ($1, NOW() + INTERVAL '24 hours')
-             ON CONFLICT (room_code) 
-             DO UPDATE SET 
-                last_activity = CURRENT_TIMESTAMP,
-                expires_at = NOW() + INTERVAL '24 hours'`,
+            'INSERT INTO rooms (room_code) VALUES ($1) ON CONFLICT DO NOTHING',
             [roomCode]
         );
-
         const result = await pool.query(
-            `INSERT INTO messages (room_code, sender, text, time, expires_at) 
-             VALUES ($1, $2, $3, $4, NOW() + INTERVAL '24 hours') 
-             RETURNING id, time`,
+            'INSERT INTO messages (room_code, sender, text, time) VALUES ($1, $2, $3, $4) RETURNING id',
             [roomCode, sender, text, time || new Date().toISOString()]
         );
-
         return result.rows[0];
     } catch (error) {
-        console.error('❌ Error saving message:', error.message);
+        console.error('❌ Save error:', error.message);
         return null;
     }
 }
 
 async function getRecentMessages(roomCode, limit = 50) {
     if (!pool) return [];
-
     try {
         const result = await pool.query(
-            `SELECT sender, text, time 
-             FROM messages 
-             WHERE room_code = $1 
-               AND expires_at > NOW()
-             ORDER BY time DESC 
-             LIMIT $2`,
+            'SELECT sender, text, time FROM messages WHERE room_code = $1 ORDER BY time DESC LIMIT $2',
             [roomCode, limit]
         );
-
         return result.rows.reverse();
     } catch (error) {
-        console.error('❌ Error fetching messages:', error.message);
+        console.error('❌ Fetch error:', error.message);
         return [];
     }
 }
 
 async function deleteExpiredMessages() {
+    // Simplified - just keep last 100 messages per room
     if (!pool) return;
-
     try {
-        const messageResult = await pool.query(
-            `DELETE FROM messages WHERE expires_at < NOW()`
-        );
-        const roomResult = await pool.query(
-            `DELETE FROM rooms WHERE expires_at < NOW()`
-        );
-        
-        const totalDeleted = messageResult.rowCount + roomResult.rowCount;
-        if (totalDeleted > 0) {
-            console.log(`🧹 Deleted ${messageResult.rowCount} expired messages and ${roomResult.rowCount} expired rooms`);
-        }
-        return totalDeleted;
+        await pool.query(`
+            DELETE FROM messages 
+            WHERE id NOT IN (
+                SELECT id FROM messages 
+                ORDER BY time DESC 
+                LIMIT 100
+            )
+        `);
     } catch (error) {
-        console.error('❌ Error deleting expired messages:', error.message);
-        return 0;
+        console.error('❌ Cleanup error:', error.message);
     }
 }
 
 async function getStorageStats() {
     if (!pool) return null;
-
     try {
-        const result = await pool.query(`
-            SELECT 
-                (SELECT COUNT(*) FROM messages) as total_messages,
-                (SELECT COUNT(*) FROM messages WHERE expires_at > NOW()) as active_messages,
-                (SELECT COUNT(*) FROM messages WHERE expires_at < NOW()) as expired_messages,
-                (SELECT COUNT(*) FROM rooms) as total_rooms,
-                (SELECT COUNT(*) FROM rooms WHERE expires_at > NOW()) as active_rooms
-        `);
-        return result.rows[0];
+        const result = await pool.query(
+            'SELECT COUNT(*) as total_messages FROM messages'
+        );
+        return { total_messages: result.rows[0].total_messages };
     } catch (error) {
-        console.error('❌ Error getting storage stats:', error.message);
         return null;
     }
 }
