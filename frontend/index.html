@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Private Chat · Room</title>
+    <title>💕 Our Private Chat</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
         }
 
         body {
-            background: #0b0e14;
+            background: linear-gradient(135deg, #0b0e14 0%, #1a1035 50%, #0b0e14 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -22,63 +22,68 @@
             color: #eef2fc;
         }
 
-        .join-screen {
-            background: #141a26;
+        .login-screen {
+            background: rgba(20, 26, 38, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 40px;
             padding: 40px;
-            max-width: 440px;
+            max-width: 420px;
             width: 100%;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 107, 157, 0.1);
+            border: 1px solid rgba(255, 107, 157, 0.1);
         }
 
-        .join-screen h1 {
+        .login-screen .love-icon {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 10px;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .login-screen h1 {
+            text-align: center;
             font-size: 28px;
-            margin-bottom: 8px;
-            color: #f0f4ff;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .join-screen .sub {
+        .login-screen .sub {
+            text-align: center;
             color: #8d9fd0;
             margin-bottom: 30px;
+            font-size: 14px;
         }
 
-        .join-screen input {
+        .login-screen input {
             width: 100%;
             padding: 14px 18px;
             background: #0f1625;
             border: 2px solid rgba(255, 255, 255, 0.04);
             border-radius: 60px;
             color: #f0f4ff;
-            font-size: 20px;
-            text-align: center;
-            letter-spacing: 4px;
+            font-size: 16px;
             outline: none;
             margin-bottom: 12px;
             transition: 0.15s;
         }
 
-        .join-screen input:focus {
-            border-color: #6c5ce7;
+        .login-screen input:focus {
+            border-color: #ff6b9d;
             background: #141d30;
+            box-shadow: 0 0 20px rgba(255, 107, 157, 0.1);
         }
 
-        .join-screen input::placeholder {
-            color: #3a4666;
-            font-size: 16px;
-            letter-spacing: 1px;
-        }
-
-        .join-screen .name-input {
-            font-size: 16px;
-            letter-spacing: 0;
-            text-align: left;
-            padding: 14px 18px;
-        }
-
-        .join-screen .join-btn {
+        .login-screen .login-btn {
             width: 100%;
             padding: 16px;
-            background: #6c5ce7;
+            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
             border: none;
             border-radius: 60px;
             color: white;
@@ -86,34 +91,32 @@
             font-weight: 600;
             cursor: pointer;
             transition: 0.15s;
-            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.3);
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
             margin-top: 10px;
         }
 
-        .join-screen .join-btn:hover {
-            background: #7c6df5;
+        .login-screen .login-btn:hover {
             transform: scale(1.01);
+            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.4);
         }
 
-        .join-screen .join-btn:active {
-            transform: scale(0.97);
-        }
-
-        .join-screen .error {
+        .login-screen .error {
             color: #ff6b6b;
             font-size: 13px;
             margin-top: 8px;
             min-height: 20px;
+            text-align: center;
         }
 
         .chat-app {
             width: 100%;
             max-width: 700px;
-            background: #141a26;
+            background: rgba(20, 26, 38, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 40px;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 107, 157, 0.08);
         }
 
         .chat-app.hidden {
@@ -122,8 +125,8 @@
 
         .chat-header {
             padding: 18px 24px;
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 107, 157, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -139,18 +142,19 @@
         }
 
         .room-badge {
-            background: #2a3349;
+            background: rgba(255, 107, 157, 0.1);
             padding: 6px 16px;
             border-radius: 60px;
             font-size: 14px;
-            color: #bcc8f0;
+            color: #ff6b9d;
+            border: 1px solid rgba(255, 107, 157, 0.1);
         }
 
         .room-badge span {
             font-family: monospace;
             font-weight: 700;
             font-size: 18px;
-            color: #c8d6ff;
+            color: #ff8fb3;
             letter-spacing: 2px;
         }
 
@@ -189,6 +193,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            background: rgba(0, 0, 0, 0.1);
         }
 
         .messages::-webkit-scrollbar {
@@ -201,7 +206,7 @@
         }
 
         .messages::-webkit-scrollbar-thumb {
-            background: #3f4a68;
+            background: #ff6b9d;
             border-radius: 20px;
         }
 
@@ -212,7 +217,7 @@
             font-size: 15px;
             line-height: 1.5;
             word-wrap: break-word;
-            animation: fadeIn 0.2s ease;
+            animation: fadeIn 0.3s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
@@ -230,15 +235,15 @@
 
         .message-right {
             align-self: flex-end;
-            background: #6c5ce7;
+            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
             color: white;
             border-bottom-right-radius: 6px;
         }
 
         .message-system {
             align-self: center;
-            background: rgba(255, 255, 255, 0.04);
-            color: #8d9fd0;
+            background: rgba(255, 107, 157, 0.1);
+            color: #ff8fb3;
             font-size: 13px;
             padding: 6px 16px;
             border-radius: 40px;
@@ -256,25 +261,21 @@
         }
 
         .message-right .message-meta {
-            color: #ddd6ff;
+            color: rgba(255, 255, 255, 0.8);
             opacity: 0.75;
-        }
-
-        .sender-name {
-            font-weight: 600;
         }
 
         .input-area {
             padding: 16px 20px 24px;
-            background: rgba(0, 0, 0, 0.15);
-            border-top: 1px solid rgba(255, 255, 255, 0.02);
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 107, 157, 0.05);
             display: flex;
             gap: 10px;
         }
 
         .input-area input {
             flex: 1;
-            background: #101724;
+            background: #0f1625;
             border: none;
             padding: 14px 18px;
             border-radius: 60px;
@@ -286,7 +287,7 @@
         }
 
         .input-area input:focus {
-            border-color: #6c5ce7;
+            border-color: #ff6b9d;
             background: #1a2236;
         }
 
@@ -296,7 +297,7 @@
         }
 
         .input-area button {
-            background: #6c5ce7;
+            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
             border: none;
             color: white;
             padding: 14px 28px;
@@ -307,7 +308,7 @@
         }
 
         .input-area button:hover:not(:disabled) {
-            background: #7c6df5;
+            transform: scale(1.02);
         }
 
         .input-area button:disabled {
@@ -317,8 +318,8 @@
 
         .chat-footer {
             padding: 10px 24px;
-            background: rgba(0, 0, 0, 0.1);
-            border-top: 1px solid rgba(255, 255, 255, 0.02);
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 107, 157, 0.05);
             font-size: 12px;
             color: #6c7ca3;
             display: flex;
@@ -327,16 +328,8 @@
             gap: 8px;
         }
 
-        .server-status {
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 40px;
-            font-size: 12px;
-            color: #8d9fd0;
-        }
-
         @media (max-width: 480px) {
-            .join-screen {
+            .login-screen {
                 padding: 30px 20px;
             }
             .input-area {
@@ -350,20 +343,45 @@
         .hidden {
             display: none !important;
         }
+
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 20px;
+            animation: floatUp linear infinite;
+            opacity: 0.1;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0.1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- JOIN SCREEN -->
-    <div class="join-screen" id="joinScreen">
-        <h1>🔑 Private Chat</h1>
-        <div class="sub">Connect with your friend</div>
+    <div class="floating-hearts" id="heartsContainer"></div>
 
-        <input type="text" id="roomInput" placeholder="Enter room code" maxlength="6" />
-        <input type="text" id="nameInput" class="name-input" placeholder="Your name" value="den" />
-        <input type="text" id="serverInput" class="name-input" placeholder="Server URL (optional)" value="" style="font-size:14px; letter-spacing:0; text-align:left;" />
-        <button class="join-btn" id="joinBtn">Join Room</button>
-        <div class="error" id="errorMsg"></div>
+    <!-- LOGIN SCREEN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="love-icon">💕</div>
+        <h1>Our Private Chat</h1>
+        <div class="sub">Just for you and me ❤️</div>
+
+        <input type="text" id="usernameInput" placeholder="Username" value="love" />
+        <input type="password" id="passwordInput" placeholder="Password" />
+        <button class="login-btn" id="loginBtn">💕 Enter Our World</button>
+        <div class="error" id="loginError"></div>
     </div>
 
     <!-- CHAT APP -->
@@ -371,7 +389,7 @@
         <div class="chat-header">
             <div class="room-info">
                 <div class="room-badge">
-                    🏠 Room <span id="roomDisplay">------</span>
+                    💕 Room <span id="roomDisplay">------</span>
                 </div>
                 <div class="connection-status">
                     <span class="status-dot" id="statusDot"></span>
@@ -383,34 +401,30 @@
             </button>
         </div>
 
-        <div class="messages" id="messageContainer"></div>
+        <div class="messages" id="messageContainer">
+            <div class="message message-system">💕 Welcome to your private space</div>
+        </div>
 
         <div class="input-area">
-            <input type="text" id="messageInput" placeholder="Type a message..." />
-            <button id="sendBtn">Send</button>
+            <input type="text" id="messageInput" placeholder="Type a message... 💬" disabled />
+            <button id="sendBtn" disabled>Send 💕</button>
         </div>
 
         <div class="chat-footer">
-            <span>🔒 Private room</span>
-            <span id="userDisplay">You: den</span>
-            <span class="server-status" id="serverDisplay">🌐 Server: loading...</span>
+            <span>💕 Just us two</span>
+            <span id="userDisplay">You: 💕</span>
+            <span>⏰ Messages disappear in 24h</span>
         </div>
     </div>
 
     <script>
-        // ----- Configuration -----
-        // Default server URL - change this to your Render backend URL
-        const DEFAULT_SERVER = 'wss://private-chat-backend.onrender.com';
-        // For local testing: 'ws://localhost:3000'
-
         // ----- DOM elements -----
-        const joinScreen = document.getElementById('joinScreen');
+        const loginScreen = document.getElementById('loginScreen');
         const chatApp = document.getElementById('chatApp');
-        const roomInput = document.getElementById('roomInput');
-        const nameInput = document.getElementById('nameInput');
-        const serverInput = document.getElementById('serverInput');
-        const joinBtn = document.getElementById('joinBtn');
-        const errorMsg = document.getElementById('errorMsg');
+        const usernameInput = document.getElementById('usernameInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
         const roomDisplay = document.getElementById('roomDisplay');
         const messageContainer = document.getElementById('messageContainer');
         const messageInput = document.getElementById('messageInput');
@@ -419,19 +433,36 @@
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
         const userDisplay = document.getElementById('userDisplay');
-        const serverDisplay = document.getElementById('serverDisplay');
 
         // ----- State -----
         let ws = null;
         let currentRoom = null;
-        let userName = 'den';
-        let reconnectAttempts = 0;
-        const MAX_RECONNECT_ATTEMPTS = 5;
+        let userName = '💕 Partner';
+
+        // ⚠️ IMPORTANT: Change this to your Render backend URL
+        const DEFAULT_SERVER = 'wss://your-backend.onrender.com';
+
+        // ----- Floating hearts -----
+        function createHearts() {
+            const container = document.getElementById('heartsContainer');
+            const heartEmojis = ['❤️', '💕', '💗', '💖', '💝', '💘'];
+            for (let i = 0; i < 20; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
+                heart.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                heart.style.animationDelay = (Math.random() * 20) + 's';
+                container.appendChild(heart);
+            }
+        }
+        createHearts();
 
         // ----- Helper functions -----
-        function showError(msg) {
-            errorMsg.textContent = msg;
-            setTimeout(() => { errorMsg.textContent = ''; }, 3000);
+        function showLoginError(msg) {
+            loginError.textContent = msg;
+            setTimeout(() => { loginError.textContent = ''; }, 3000);
         }
 
         function addMessage(text, sender, time) {
@@ -446,7 +477,7 @@
                 div.innerHTML = `
                     <div>${text}</div>
                     <div class="message-meta">
-                        <span class="sender-name">${sender}</span>
+                        <span class="sender-name">${sender === '💕 Partner' ? '💕 You' : sender}</span>
                         <span>${time || new Date().toLocaleTimeString()}</span>
                     </div>
                 `;
@@ -459,7 +490,7 @@
         function setConnectionStatus(connected) {
             if (connected) {
                 statusDot.className = 'status-dot';
-                statusText.textContent = 'Connected';
+                statusText.textContent = '💕 Connected';
                 messageInput.disabled = false;
                 sendBtn.disabled = false;
             } else {
@@ -470,22 +501,17 @@
             }
         }
 
-        function connectToRoom(roomCode, name, serverUrl) {
-            // Use provided server or default
-            const wsUrl = serverUrl || DEFAULT_SERVER;
-            serverDisplay.textContent = `🌐 ${wsUrl.replace('wss://', '').replace('ws://', '')}`;
+        function connectToRoom(roomCode, name) {
+            const wsUrl = DEFAULT_SERVER;
             
             try {
                 ws = new WebSocket(wsUrl);
 
                 ws.onopen = () => {
-                    setConnectionStatus(true);
-                    reconnectAttempts = 0;
-                    
                     ws.send(JSON.stringify({
-                        type: 'join',
-                        roomCode: roomCode,
-                        name: name
+                        type: 'auth',
+                        username: usernameInput.value,
+                        password: passwordInput.value
                     }));
                 };
 
@@ -494,11 +520,34 @@
                         const data = JSON.parse(event.data);
                         
                         switch(data.type) {
+                            case 'auth_success':
+                                setConnectionStatus(true);
+                                ws.send(JSON.stringify({
+                                    type: 'join',
+                                    roomCode: roomCode,
+                                    name: name
+                                }));
+                                break;
+                                
+                            case 'auth_error':
+                                showLoginError(data.message);
+                                ws.close();
+                                break;
+                                
                             case 'joined':
                                 currentRoom = roomCode;
                                 roomDisplay.textContent = roomCode;
                                 userDisplay.textContent = `You: ${name}`;
-                                addMessage(`✅ ${data.message}`, 'system');
+                                addMessage(`💕 ${data.message}`, 'system');
+                                
+                                if (data.history && data.history.length > 0) {
+                                    setTimeout(() => {
+                                        addMessage(`📜 ${data.history.length} previous messages`, 'system');
+                                        for (const msg of data.history) {
+                                            addMessage(msg.text, msg.sender, new Date(msg.time).toLocaleTimeString());
+                                        }
+                                    }, 100);
+                                }
                                 break;
                                 
                             case 'message':
@@ -510,7 +559,7 @@
                                 break;
                                 
                             case 'error':
-                                showError(data.message);
+                                showLoginError(data.message);
                                 break;
                         }
                     } catch (error) {
@@ -520,24 +569,15 @@
 
                 ws.onclose = () => {
                     setConnectionStatus(false);
-                    addMessage('❌ Disconnected from server', 'system');
-                    
-                    // Auto-reconnect
-                    if (currentRoom && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                        reconnectAttempts++;
-                        setTimeout(() => {
-                            addMessage(`🔄 Reconnecting... (attempt ${reconnectAttempts})`, 'system');
-                            connectToRoom(currentRoom, userName, wsUrl);
-                        }, 2000 * reconnectAttempts);
-                    }
+                    addMessage('❌ Disconnected', 'system');
                 };
 
                 ws.onerror = (error) => {
                     console.error('WebSocket error:', error);
-                    showError('Connection failed. Check server URL.');
+                    showLoginError('Connection failed. Check server URL.');
                 };
             } catch (error) {
-                showError('Failed to connect: ' + error.message);
+                showLoginError('Failed to connect: ' + error.message);
             }
         }
 
@@ -550,37 +590,42 @@
             }
             ws = null;
             currentRoom = null;
-            reconnectAttempts = 0;
             chatApp.classList.add('hidden');
-            joinScreen.style.display = 'block';
-            messageContainer.innerHTML = '';
-            roomInput.value = '';
+            loginScreen.style.display = 'block';
+            messageContainer.innerHTML = '<div class="message message-system">💕 Welcome to your private space</div>';
             setConnectionStatus(false);
+            usernameInput.value = 'love';
+            passwordInput.value = '';
+            loginBtn.disabled = false;
         }
 
         // ----- Event listeners -----
-        joinBtn.addEventListener('click', () => {
-            const roomCode = roomInput.value.trim();
-            const name = nameInput.value.trim() || 'Anonymous';
-            const serverUrl = serverInput.value.trim();
+        loginBtn.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
             
-            if (!roomCode || roomCode.length !== 6 || !/^\d{6}$/.test(roomCode)) {
-                showError('Please enter a valid 6-digit room code');
+            if (!username || !password) {
+                showLoginError('Please enter both username and password');
                 return;
             }
             
-            userName = name;
-            joinScreen.style.display = 'none';
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Connecting... 💕';
+            
+            const roomCode = 'LOVE' + Math.floor(100 + Math.random() * 900);
+            userName = '💕 Partner';
+            
+            loginScreen.style.display = 'none';
             chatApp.classList.remove('hidden');
-            connectToRoom(roomCode, name, serverUrl);
+            
+            connectToRoom(roomCode, userName);
+            
+            loginBtn.disabled = false;
+            loginBtn.textContent = '💕 Enter Our World';
         });
 
-        roomInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') joinBtn.click();
-        });
-
-        nameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') joinBtn.click();
+        passwordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
         });
 
         sendBtn.addEventListener('click', () => {
@@ -603,22 +648,10 @@
 
         leaveBtn.addEventListener('click', leaveRoom);
 
-        // Auto-focus
-        roomInput.focus();
+        usernameInput.focus();
 
-        // Load saved server URL
-        const savedServer = localStorage.getItem('chatServerUrl');
-        if (savedServer) {
-            serverInput.value = savedServer;
-        }
-
-        // Save server URL on change
-        serverInput.addEventListener('change', () => {
-            localStorage.setItem('chatServerUrl', serverInput.value);
-        });
-
-        console.log('💬 Private chat client ready!');
-        console.log('📡 Connect to your Render backend or use default');
+        console.log('💕 Private chat for two!');
+        console.log('⚠️ Make sure to update DEFAULT_SERVER with your Render URL');
     </script>
 </body>
 </html>
