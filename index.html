@@ -100,6 +100,12 @@
             box-shadow: 0 8px 30px rgba(255, 107, 157, 0.4);
         }
 
+        .login-screen .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .login-screen .error {
             color: #ff6b6b;
             font-size: 13px;
@@ -392,8 +398,8 @@
                     💕 Room <span id="roomDisplay">------</span>
                 </div>
                 <div class="connection-status">
-                    <span class="status-dot" id="statusDot"></span>
-                    <span id="statusText">Connected</span>
+                    <span class="status-dot disconnected" id="statusDot"></span>
+                    <span id="statusText">Disconnected</span>
                 </div>
             </div>
             <button id="leaveBtn" style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.1); color: #ff8a8a; padding: 6px 16px; border-radius: 40px; cursor: pointer;">
@@ -438,8 +444,10 @@
         let ws = null;
         let currentRoom = null;
         let userName = '💕 Partner';
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
 
-        // ⚠️ IMPORTANT: Change this to your Render backend URL
+        // ⚠️ IMPORTANT: Your Render backend URL
         const DEFAULT_SERVER = 'wss://chitchat-backend-61t4.onrender.com';
 
         // ----- Floating hearts -----
@@ -474,10 +482,11 @@
             } else {
                 const isMe = sender === userName;
                 div.className = `message ${isMe ? 'message-right' : 'message-left'}`;
+                const displayName = isMe ? '💕 You' : sender;
                 div.innerHTML = `
                     <div>${text}</div>
                     <div class="message-meta">
-                        <span class="sender-name">${sender === '💕 Partner' ? '💕 You' : sender}</span>
+                        <span class="sender-name">${displayName}</span>
                         <span>${time || new Date().toLocaleTimeString()}</span>
                     </div>
                 `;
@@ -493,11 +502,13 @@
                 statusText.textContent = '💕 Connected';
                 messageInput.disabled = false;
                 sendBtn.disabled = false;
+                messageInput.placeholder = 'Type a message... 💬';
             } else {
                 statusDot.className = 'status-dot disconnected';
                 statusText.textContent = 'Disconnected';
                 messageInput.disabled = true;
                 sendBtn.disabled = true;
+                messageInput.placeholder = 'Connecting...';
             }
         }
 
@@ -508,20 +519,25 @@
                 ws = new WebSocket(wsUrl);
 
                 ws.onopen = () => {
+                    console.log('✅ WebSocket connected, sending auth...');
+                    // Send authentication first
                     ws.send(JSON.stringify({
                         type: 'auth',
-                        username: usernameInput.value,
-                        password: passwordInput.value
+                        username: usernameInput.value.trim(),
+                        password: passwordInput.value.trim()
                     }));
                 };
 
                 ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
+                        console.log('📨 Received:', data);
                         
                         switch(data.type) {
                             case 'auth_success':
+                                console.log('✅ Auth successful!');
                                 setConnectionStatus(true);
+                                // Now join the room
                                 ws.send(JSON.stringify({
                                     type: 'join',
                                     roomCode: roomCode,
@@ -530,11 +546,13 @@
                                 break;
                                 
                             case 'auth_error':
+                                console.log('❌ Auth error:', data.message);
                                 showLoginError(data.message);
                                 ws.close();
                                 break;
                                 
                             case 'joined':
+                                console.log('✅ Joined room:', roomCode);
                                 currentRoom = roomCode;
                                 roomDisplay.textContent = roomCode;
                                 userDisplay.textContent = `You: ${name}`;
@@ -568,15 +586,26 @@
                 };
 
                 ws.onclose = () => {
+                    console.log('❌ WebSocket closed');
                     setConnectionStatus(false);
-                    addMessage('❌ Disconnected', 'system');
+                    addMessage('❌ Disconnected from server', 'system');
+                    
+                    // Auto-reconnect
+                    if (currentRoom && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                        reconnectAttempts++;
+                        setTimeout(() => {
+                            addMessage(`🔄 Reconnecting... (attempt ${reconnectAttempts})`, 'system');
+                            connectToRoom(currentRoom, userName);
+                        }, 2000 * reconnectAttempts);
+                    }
                 };
 
                 ws.onerror = (error) => {
-                    console.error('WebSocket error:', error);
+                    console.error('❌ WebSocket error:', error);
                     showLoginError('Connection failed. Check server URL.');
                 };
             } catch (error) {
+                console.error('❌ Connection error:', error);
                 showLoginError('Failed to connect: ' + error.message);
             }
         }
@@ -590,6 +619,7 @@
             }
             ws = null;
             currentRoom = null;
+            reconnectAttempts = 0;
             chatApp.classList.add('hidden');
             loginScreen.style.display = 'block';
             messageContainer.innerHTML = '<div class="message message-system">💕 Welcome to your private space</div>';
@@ -597,6 +627,7 @@
             usernameInput.value = 'love';
             passwordInput.value = '';
             loginBtn.disabled = false;
+            loginBtn.textContent = '💕 Enter Our World';
         }
 
         // ----- Event listeners -----
@@ -617,6 +648,7 @@
             
             loginScreen.style.display = 'none';
             chatApp.classList.remove('hidden');
+            setConnectionStatus(false);
             
             connectToRoom(roomCode, userName);
             
@@ -648,10 +680,13 @@
 
         leaveBtn.addEventListener('click', leaveRoom);
 
+        // ----- Initial setup -----
         usernameInput.focus();
 
         console.log('💕 Private chat for two!');
-        console.log('⚠️ Make sure to update DEFAULT_SERVER with your Render URL');
+        console.log('📡 Backend URL:', DEFAULT_SERVER);
+        console.log('🔑 Default credentials: love / iloveyou2024');
+        console.log('⚠️ If you changed them, use your custom credentials');
     </script>
 </body>
 </html>
