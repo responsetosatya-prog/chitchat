@@ -5,13 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>💕 Our Private Chat</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body {
             background: linear-gradient(135deg, #0b0e14 0%, #1a1035 50%, #0b0e14 100%);
             min-height: 100vh;
@@ -21,7 +15,6 @@
             padding: 16px;
             color: #eef2fc;
         }
-
         .login-screen {
             background: rgba(20, 26, 38, 0.95);
             backdrop-filter: blur(10px);
@@ -29,22 +22,16 @@
             padding: 40px;
             max-width: 420px;
             width: 100%;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 107, 157, 0.1);
-            border: 1px solid rgba(255, 107, 157, 0.1);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(255,107,157,0.1);
+            border: 1px solid rgba(255,107,157,0.1);
         }
-
         .login-screen .love-icon {
             text-align: center;
             font-size: 48px;
             margin-bottom: 10px;
             animation: heartbeat 1.5s ease-in-out infinite;
         }
-
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
+        @keyframes heartbeat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         .login-screen h1 {
             text-align: center;
             font-size: 28px;
@@ -53,33 +40,30 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         .login-screen .sub {
             text-align: center;
             color: #8d9fd0;
             margin-bottom: 30px;
             font-size: 14px;
         }
-
         .login-screen .room-code-display {
             text-align: center;
-            background: rgba(255, 107, 157, 0.1);
+            background: rgba(255,107,157,0.1);
             padding: 10px;
             border-radius: 60px;
             margin-bottom: 15px;
-            border: 1px solid rgba(255, 107, 157, 0.1);
+            border: 1px solid rgba(255,107,157,0.1);
             font-family: monospace;
             font-size: 24px;
             font-weight: bold;
             color: #ff8fb3;
             letter-spacing: 4px;
         }
-
         .login-screen input {
             width: 100%;
             padding: 14px 18px;
             background: #0f1625;
-            border: 2px solid rgba(255, 255, 255, 0.04);
+            border: 2px solid rgba(255,255,255,0.04);
             border-radius: 60px;
             color: #f0f4ff;
             font-size: 16px;
@@ -87,13 +71,7 @@
             margin-bottom: 12px;
             transition: 0.15s;
         }
-
-        .login-screen input:focus {
-            border-color: #ff6b9d;
-            background: #141d30;
-            box-shadow: 0 0 20px rgba(255, 107, 157, 0.1);
-        }
-
+        .login-screen input:focus { border-color: #ff6b9d; background: #141d30; box-shadow: 0 0 20px rgba(255,107,157,0.1); }
         .login-screen .login-btn {
             width: 100%;
             padding: 16px;
@@ -105,106 +83,51 @@
             font-weight: 600;
             cursor: pointer;
             transition: 0.15s;
-            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
+            box-shadow: 0 6px 20px rgba(255,107,157,0.3);
             margin-top: 10px;
         }
-
-        .login-screen .login-btn:hover {
-            transform: scale(1.01);
-            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.4);
-        }
-
-        .login-screen .login-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .login-screen .error {
-            color: #ff6b6b;
-            font-size: 13px;
-            margin-top: 8px;
-            min-height: 20px;
-            text-align: center;
-        }
-
+        .login-screen .login-btn:hover { transform: scale(1.01); box-shadow: 0 8px 30px rgba(255,107,157,0.4); }
+        .login-screen .login-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .login-screen .error { color: #ff6b6b; font-size: 13px; margin-top: 8px; min-height: 20px; text-align: center; }
         .chat-app {
             width: 100%;
             max-width: 700px;
-            background: rgba(20, 26, 38, 0.95);
+            background: rgba(20,26,38,0.95);
             backdrop-filter: blur(10px);
             border-radius: 40px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
             overflow: hidden;
-            border: 1px solid rgba(255, 107, 157, 0.08);
+            border: 1px solid rgba(255,107,157,0.08);
         }
-
-        .chat-app.hidden {
-            display: none;
-        }
-
+        .chat-app.hidden { display: none; }
         .chat-header {
             padding: 18px 24px;
-            background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(255, 107, 157, 0.05);
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,107,157,0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 12px;
         }
-
-        .room-info {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
-
+        .room-info { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
         .room-badge {
-            background: rgba(255, 107, 157, 0.1);
+            background: rgba(255,107,157,0.1);
             padding: 6px 16px;
             border-radius: 60px;
             font-size: 14px;
             color: #ff6b9d;
-            border: 1px solid rgba(255, 107, 157, 0.1);
+            border: 1px solid rgba(255,107,157,0.1);
         }
-
-        .room-badge span {
-            font-family: monospace;
-            font-weight: 700;
-            font-size: 18px;
-            color: #ff8fb3;
-            letter-spacing: 2px;
-        }
-
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #9aa9cf;
-        }
-
+        .room-badge span { font-family: monospace; font-weight: 700; font-size: 18px; color: #ff8fb3; letter-spacing: 2px; }
+        .connection-status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #9aa9cf; }
         .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 10px;
-            background: #00e676;
-            display: inline-block;
+            width: 10px; height: 10px; border-radius: 10px;
+            background: #00e676; display: inline-block;
             animation: pulse 1.8s infinite;
         }
-
-        .status-dot.disconnected {
-            background: #ff5252;
-            animation: none;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; transform: scale(0.9); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
-
+        .status-dot.disconnected { background: #ff5252; animation: none; }
+        @keyframes pulse { 0%,100% { opacity: 0.5; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.2); } }
         .messages {
             padding: 20px;
             max-height: 420px;
@@ -213,23 +136,11 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(0,0,0,0.1);
         }
-
-        .messages::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .messages::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 20px;
-        }
-
-        .messages::-webkit-scrollbar-thumb {
-            background: #ff6b9d;
-            border-radius: 20px;
-        }
-
+        .messages::-webkit-scrollbar { width: 4px; }
+        .messages::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 20px; }
+        .messages::-webkit-scrollbar-thumb { background: #ff6b9d; border-radius: 20px; }
         .message {
             max-width: 80%;
             padding: 12px 18px;
@@ -238,61 +149,21 @@
             line-height: 1.5;
             word-wrap: break-word;
             animation: fadeIn 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message-left {
-            align-self: flex-start;
-            background: #293040;
-            color: #f0f4ff;
-            border-bottom-left-radius: 6px;
-        }
-
-        .message-right {
-            align-self: flex-end;
-            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
-            color: white;
-            border-bottom-right-radius: 6px;
-        }
-
-        .message-system {
-            align-self: center;
-            background: rgba(255, 107, 157, 0.1);
-            color: #ff8fb3;
-            font-size: 13px;
-            padding: 6px 16px;
-            border-radius: 40px;
-            max-width: 90%;
-        }
-
-        .message-meta {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 6px;
-            font-size: 10px;
-            opacity: 0.55;
-            color: #c8d0e6;
-        }
-
-        .message-right .message-meta {
-            color: rgba(255, 255, 255, 0.8);
-            opacity: 0.75;
-        }
-
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .message-left { align-self: flex-start; background: #293040; color: #f0f4ff; border-bottom-left-radius: 6px; }
+        .message-right { align-self: flex-end; background: linear-gradient(135deg, #ff6b9d, #ff3d7a); color: white; border-bottom-right-radius: 6px; }
+        .message-system { align-self: center; background: rgba(255,107,157,0.1); color: #ff8fb3; font-size: 13px; padding: 6px 16px; border-radius: 40px; max-width: 90%; }
+        .message-meta { display: flex; align-items: center; gap: 12px; margin-top: 6px; font-size: 10px; opacity: 0.55; color: #c8d0e6; }
+        .message-right .message-meta { color: rgba(255,255,255,0.8); opacity: 0.75; }
         .input-area {
             padding: 16px 20px 24px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 107, 157, 0.05);
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid rgba(255,107,157,0.05);
             display: flex;
             gap: 10px;
         }
-
         .input-area input {
             flex: 1;
             background: #0f1625;
@@ -302,20 +173,11 @@
             color: #f0f4ff;
             font-size: 15px;
             outline: none;
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255,255,255,0.04);
             transition: 0.15s;
         }
-
-        .input-area input:focus {
-            border-color: #ff6b9d;
-            background: #1a2236;
-        }
-
-        .input-area input:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
+        .input-area input:focus { border-color: #ff6b9d; background: #1a2236; }
+        .input-area input:disabled { opacity: 0.5; cursor: not-allowed; }
         .input-area button {
             background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
             border: none;
@@ -326,20 +188,12 @@
             cursor: pointer;
             transition: 0.15s;
         }
-
-        .input-area button:hover:not(:disabled) {
-            transform: scale(1.02);
-        }
-
-        .input-area button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
+        .input-area button:hover:not(:disabled) { transform: scale(1.02); }
+        .input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
         .chat-footer {
             padding: 10px 24px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 107, 157, 0.05);
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid rgba(255,107,157,0.05);
             font-size: 12px;
             color: #6c7ca3;
             display: flex;
@@ -347,23 +201,12 @@
             flex-wrap: wrap;
             gap: 8px;
         }
-
         @media (max-width: 480px) {
-            .login-screen {
-                padding: 30px 20px;
-            }
-            .input-area {
-                flex-direction: column;
-            }
-            .message {
-                max-width: 92%;
-            }
+            .login-screen { padding: 30px 20px; }
+            .input-area { flex-direction: column; }
+            .message { max-width: 92%; }
         }
-
-        .hidden {
-            display: none !important;
-        }
-
+        .hidden { display: none !important; }
         .floating-hearts {
             position: fixed;
             top: 0;
@@ -374,14 +217,12 @@
             z-index: -1;
             overflow: hidden;
         }
-
         .heart {
             position: absolute;
             font-size: 20px;
             animation: floatUp linear infinite;
             opacity: 0.1;
         }
-
         @keyframes floatUp {
             0% { transform: translateY(100vh) rotate(0deg); opacity: 0.1; }
             100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
@@ -398,7 +239,6 @@
         <h1>Our Private Chat</h1>
         <div class="sub">Just for you and me ❤️</div>
 
-        <!-- Show the room code -->
         <div class="room-code-display" id="roomCodeDisplay">LOVE123</div>
 
         <input type="text" id="usernameInput" placeholder="Username" value="love" />
@@ -465,18 +305,15 @@
         let ws = null;
         let currentRoom = null;
         let userName = '💕 Partner';
-
-        // ⚠️ IMPORTANT: Your Render backend URL
         const DEFAULT_SERVER = 'wss://chitchat-backend-61t4.onrender.com';
-
-        // FIXED ROOM CODE - Same for both of you!
         const ROOM_CODE = 'LOVE123';
 
-        // Display the room code
+        // Display room code
         roomCodeDisplay.textContent = ROOM_CODE;
 
-        // Expose ws for console testing
+        // Expose for debugging
         window.ws = ws;
+        window.currentRoom = currentRoom;
 
         // ----- Floating hearts -----
         function createHearts() {
@@ -502,7 +339,7 @@
         }
 
         function addMessage(text, sender, time) {
-            console.log('📝 Adding message:', { text, sender, time });
+            console.log('📝 Adding message:', text);
             const div = document.createElement('div');
             
             if (sender === 'system') {
@@ -541,15 +378,15 @@
             }
         }
 
+        // ----- Connection -----
         function connectToRoom(roomCode, name) {
-            const wsUrl = DEFAULT_SERVER;
-            
             try {
-                ws = new WebSocket(wsUrl);
+                ws = new WebSocket(DEFAULT_SERVER);
                 window.ws = ws;
+                window.currentRoom = roomCode;
 
                 ws.onopen = () => {
-                    console.log('✅ WebSocket connected, sending auth...');
+                    console.log('✅ WebSocket connected');
                     ws.send(JSON.stringify({
                         type: 'auth',
                         username: usernameInput.value.trim(),
@@ -560,88 +397,72 @@
                 ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
-                        console.log('📨 Received:', data);
-                        
+                        console.log('📨 Received:', data.type, data);
+
                         switch(data.type) {
                             case 'auth_success':
-                                console.log('✅ Auth successful!');
-                                setConnectionStatus(true);
+                                console.log('✅ Auth success');
                                 ws.send(JSON.stringify({
                                     type: 'join',
                                     roomCode: roomCode,
                                     name: name
                                 }));
                                 break;
-                                
-                            case 'auth_error':
-                                console.log('❌ Auth error:', data.message);
-                                showLoginError(data.message);
-                                setConnectionStatus(false);
-                                break;
-                                
+
                             case 'joined':
                                 console.log('✅ Joined room:', roomCode);
                                 currentRoom = roomCode;
                                 roomDisplay.textContent = roomCode;
                                 userDisplay.textContent = `You: ${name}`;
-                                addMessage(`💕 ${data.message}`, 'system');
                                 setConnectionStatus(true);
-                                
-                                if (data.history && data.history.length > 0) {
-                                    setTimeout(() => {
-                                        addMessage(`📜 ${data.history.length} previous messages`, 'system');
-                                        for (const msg of data.history) {
-                                            addMessage(msg.text, msg.sender, new Date(msg.time).toLocaleTimeString());
-                                        }
-                                    }, 100);
-                                }
+                                addMessage(`💕 ${data.message}`, 'system');
                                 break;
-                                
+
                             case 'message':
-                                console.log('💬 New message:', data.text, 'from:', data.sender);
+                                console.log('💬 New message from:', data.sender);
                                 addMessage(data.text, data.sender, data.time);
                                 break;
-                                
+
                             case 'system':
                                 addMessage(data.message, 'system');
                                 break;
-                                
+
+                            case 'auth_error':
                             case 'error':
                                 showLoginError(data.message);
+                                setConnectionStatus(false);
                                 break;
                         }
                     } catch (error) {
-                        console.error('Error parsing message:', error);
+                        console.error('❌ Parse error:', error);
                     }
                 };
 
                 ws.onclose = () => {
                     console.log('❌ WebSocket closed');
                     setConnectionStatus(false);
-                    addMessage('❌ Disconnected from server', 'system');
+                    addMessage('❌ Disconnected', 'system');
                 };
 
                 ws.onerror = (error) => {
                     console.error('❌ WebSocket error:', error);
-                    showLoginError('Connection failed. Check server URL.');
+                    showLoginError('Connection failed');
                     setConnectionStatus(false);
                 };
+
             } catch (error) {
                 console.error('❌ Connection error:', error);
-                showLoginError('Failed to connect: ' + error.message);
+                showLoginError('Failed to connect');
                 setConnectionStatus(false);
             }
         }
 
         function leaveRoom() {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'leave'
-                }));
+                ws.send(JSON.stringify({ type: 'leave' }));
                 ws.close();
             }
             ws = null;
-            window.ws = null;
             currentRoom = null;
             chatApp.classList.add('hidden');
             loginScreen.style.display = 'block';
@@ -663,14 +484,12 @@
             
             loginBtn.disabled = true;
             loginBtn.textContent = 'Connecting... 💕';
-            
             userName = username === 'love' ? '💕 Partner' : username;
             
             loginScreen.style.display = 'none';
             chatApp.classList.remove('hidden');
             setConnectionStatus(false);
             
-            // Use FIXED room code
             connectToRoom(ROOM_CODE, userName);
             
             loginBtn.disabled = false;
@@ -683,24 +502,9 @@
 
         sendBtn.addEventListener('click', () => {
             const text = messageInput.value.trim();
-            console.log('📤 Send button clicked. Text:', text, 'WS State:', ws ? ws.readyState : 'null');
+            if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
             
-            if (!text) {
-                console.log('❌ Empty message');
-                return;
-            }
-            
-            if (!ws) {
-                console.log('❌ No WebSocket connection');
-                return;
-            }
-            
-            if (ws.readyState !== WebSocket.OPEN) {
-                console.log('❌ WebSocket not open. State:', ws.readyState);
-                return;
-            }
-            
-            // Add message to UI immediately (optimistic)
+            // Add to UI immediately
             addMessage(text, userName, new Date().toLocaleTimeString());
             
             // Send to server
@@ -710,7 +514,7 @@
                 time: new Date().toLocaleTimeString()
             }));
             
-            console.log('✅ Message sent');
+            console.log('✅ Message sent:', text);
             messageInput.value = '';
             messageInput.focus();
         });
@@ -723,12 +527,9 @@
 
         // ----- Initial setup -----
         usernameInput.focus();
-
         console.log('💕 Private chat for two!');
-        console.log('📡 Backend URL:', DEFAULT_SERVER);
-        console.log('🔑 Default credentials: love / iloveyou2024');
-        console.log('🏠 Room Code:', ROOM_CODE, '(FIXED - use this for both)');
-        console.log('📝 Type messages and watch the console for debugging');
+        console.log('🏠 Room Code:', ROOM_CODE);
+        console.log('🔑 Credentials: love / iloveyou2024');
     </script>
 </body>
 </html>
