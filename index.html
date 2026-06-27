@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>💕 Our Private Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0b0e14 0%, #1a1035 50%, #0b0e14 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            color: #eef2fc;
+        }
+
+        .login-screen {
+            background: rgba(20, 26, 38, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            padding: 40px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 107, 157, 0.1);
+            border: 1px solid rgba(255, 107, 157, 0.1);
+        }
+
+        .login-screen .love-icon {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 10px;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .login-screen h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-screen .sub {
+            text-align: center;
+            color: #8d9fd0;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .login-screen input {
+            width: 100%;
+            padding: 14px 18px;
+            background: #0f1625;
+            border: 2px solid rgba(255, 255, 255, 0.04);
+            border-radius: 60px;
+            color: #f0f4ff;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 12px;
+            transition: 0.15s;
+        }
+
+        .login-screen input:focus {
+            border-color: #ff6b9d;
+            background: #141d30;
+            box-shadow: 0 0 20px rgba(255, 107, 157, 0.1);
+        }
+
+        .login-screen .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
+            border: none;
+            border-radius: 60px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
+            margin-top: 10px;
+        }
+
+        .login-screen .login-btn:hover {
+            transform: scale(1.01);
+            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.4);
+        }
+
+        .login-screen .error {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 8px;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        .chat-app {
+            width: 100%;
+            max-width: 700px;
+            background: rgba(20, 26, 38, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            border: 1px solid rgba(255, 107, 157, 0.08);
+        }
+
+        .chat-app.hidden {
+            display: none;
+        }
+
+        .chat-header {
+            padding: 18px 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 107, 157, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .room-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .room-badge {
+            background: rgba(255, 107, 157, 0.1);
+            padding: 6px 16px;
+            border-radius: 60px;
+            font-size: 14px;
+            color: #ff6b9d;
+            border: 1px solid rgba(255, 107, 157, 0.1);
+        }
+
+        .room-badge span {
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 18px;
+            color: #ff8fb3;
+            letter-spacing: 2px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #9aa9cf;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            background: #00e676;
+            display: inline-block;
+            animation: pulse 1.8s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #ff5252;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .messages {
+            padding: 20px;
+            max-height: 420px;
+            min-height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: #ff6b9d;
+            border-radius: 20px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 22px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-left {
+            align-self: flex-start;
+            background: #293040;
+            color: #f0f4ff;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message-right {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message-system {
+            align-self: center;
+            background: rgba(255, 107, 157, 0.1);
+            color: #ff8fb3;
+            font-size: 13px;
+            padding: 6px 16px;
+            border-radius: 40px;
+            max-width: 90%;
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 6px;
+            font-size: 10px;
+            opacity: 0.55;
+            color: #c8d0e6;
+        }
+
+        .message-right .message-meta {
+            color: rgba(255, 255, 255, 0.8);
+            opacity: 0.75;
+        }
+
+        .input-area {
+            padding: 16px 20px 24px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 107, 157, 0.05);
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            background: #0f1625;
+            border: none;
+            padding: 14px 18px;
+            border-radius: 60px;
+            color: #f0f4ff;
+            font-size: 15px;
+            outline: none;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: 0.15s;
+        }
+
+        .input-area input:focus {
+            border-color: #ff6b9d;
+            background: #1a2236;
+        }
+
+        .input-area input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .input-area button {
+            background: linear-gradient(135deg, #ff6b9d, #ff3d7a);
+            border: none;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .input-area button:hover:not(:disabled) {
+            transform: scale(1.02);
+        }
+
+        .input-area button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chat-footer {
+            padding: 10px 24px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 107, 157, 0.05);
+            font-size: 12px;
+            color: #6c7ca3;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        @media (max-width: 480px) {
+            .login-screen {
+                padding: 30px 20px;
+            }
+            .input-area {
+                flex-direction: column;
+            }
+            .message {
+                max-width: 92%;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 20px;
+            animation: floatUp linear infinite;
+            opacity: 0.1;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0.1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="floating-hearts" id="heartsContainer"></div>
+
+    <!-- LOGIN SCREEN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="love-icon">💕</div>
+        <h1>Our Private Chat</h1>
+        <div class="sub">Just for you and me ❤️</div>
+
+        <input type="text" id="usernameInput" placeholder="Username" value="love" />
+        <input type="password" id="passwordInput" placeholder="Password" />
+        <button class="login-btn" id="loginBtn">💕 Enter Our World</button>
+        <div class="error" id="loginError"></div>
+    </div>
+
+    <!-- CHAT APP -->
+    <div class="chat-app hidden" id="chatApp">
+        <div class="chat-header">
+            <div class="room-info">
+                <div class="room-badge">
+                    💕 Room <span id="roomDisplay">------</span>
+                </div>
+                <div class="connection-status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Connected</span>
+                </div>
+            </div>
+            <button id="leaveBtn" style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.1); color: #ff8a8a; padding: 6px 16px; border-radius: 40px; cursor: pointer;">
+                ✕ Leave
+            </button>
+        </div>
+
+        <div class="messages" id="messageContainer">
+            <div class="message message-system">💕 Welcome to your private space</div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type a message... 💬" disabled />
+            <button id="sendBtn" disabled>Send 💕</button>
+        </div>
+
+        <div class="chat-footer">
+            <span>💕 Just us two</span>
+            <span id="userDisplay">You: 💕</span>
+            <span>⏰ Messages disappear in 24h</span>
+        </div>
+    </div>
+
+    <script>
+        // ----- DOM elements -----
+        const loginScreen = document.getElementById('loginScreen');
+        const chatApp = document.getElementById('chatApp');
+        const usernameInput = document.getElementById('usernameInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const roomDisplay = document.getElementById('roomDisplay');
+        const messageContainer = document.getElementById('messageContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const leaveBtn = document.getElementById('leaveBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const userDisplay = document.getElementById('userDisplay');
+
+        // ----- State -----
+        let ws = null;
+        let currentRoom = null;
+        let userName = '💕 Partner';
+
+        // ⚠️ IMPORTANT: Change this to your Render backend URL
+        const DEFAULT_SERVER = 'wss://chitchat-backend-61t4.onrender.com';
+
+        // ----- Floating hearts -----
+        function createHearts() {
+            const container = document.getElementById('heartsContainer');
+            const heartEmojis = ['❤️', '💕', '💗', '💖', '💝', '💘'];
+            for (let i = 0; i < 20; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
+                heart.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                heart.style.animationDelay = (Math.random() * 20) + 's';
+                container.appendChild(heart);
+            }
+        }
+        createHearts();
+
+        // ----- Helper functions -----
+        function showLoginError(msg) {
+            loginError.textContent = msg;
+            setTimeout(() => { loginError.textContent = ''; }, 3000);
+        }
+
+        function addMessage(text, sender, time) {
+            const div = document.createElement('div');
+            
+            if (sender === 'system') {
+                div.className = 'message message-system';
+                div.textContent = text;
+            } else {
+                const isMe = sender === userName;
+                div.className = `message ${isMe ? 'message-right' : 'message-left'}`;
+                div.innerHTML = `
+                    <div>${text}</div>
+                    <div class="message-meta">
+                        <span class="sender-name">${sender === '💕 Partner' ? '💕 You' : sender}</span>
+                        <span>${time || new Date().toLocaleTimeString()}</span>
+                    </div>
+                `;
+            }
+            
+            messageContainer.appendChild(div);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+
+        function setConnectionStatus(connected) {
+            if (connected) {
+                statusDot.className = 'status-dot';
+                statusText.textContent = '💕 Connected';
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+            } else {
+                statusDot.className = 'status-dot disconnected';
+                statusText.textContent = 'Disconnected';
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+            }
+        }
+
+        function connectToRoom(roomCode, name) {
+            const wsUrl = DEFAULT_SERVER;
+            
+            try {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    ws.send(JSON.stringify({
+                        type: 'auth',
+                        username: usernameInput.value,
+                        password: passwordInput.value
+                    }));
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        switch(data.type) {
+                            case 'auth_success':
+                                setConnectionStatus(true);
+                                ws.send(JSON.stringify({
+                                    type: 'join',
+                                    roomCode: roomCode,
+                                    name: name
+                                }));
+                                break;
+                                
+                            case 'auth_error':
+                                showLoginError(data.message);
+                                ws.close();
+                                break;
+                                
+                            case 'joined':
+                                currentRoom = roomCode;
+                                roomDisplay.textContent = roomCode;
+                                userDisplay.textContent = `You: ${name}`;
+                                addMessage(`💕 ${data.message}`, 'system');
+                                
+                                if (data.history && data.history.length > 0) {
+                                    setTimeout(() => {
+                                        addMessage(`📜 ${data.history.length} previous messages`, 'system');
+                                        for (const msg of data.history) {
+                                            addMessage(msg.text, msg.sender, new Date(msg.time).toLocaleTimeString());
+                                        }
+                                    }, 100);
+                                }
+                                break;
+                                
+                            case 'message':
+                                addMessage(data.text, data.sender, data.time);
+                                break;
+                                
+                            case 'system':
+                                addMessage(data.message, 'system');
+                                break;
+                                
+                            case 'error':
+                                showLoginError(data.message);
+                                break;
+                        }
+                    } catch (error) {
+                        console.error('Error parsing message:', error);
+                    }
+                };
+
+                ws.onclose = () => {
+                    setConnectionStatus(false);
+                    addMessage('❌ Disconnected', 'system');
+                };
+
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    showLoginError('Connection failed. Check server URL.');
+                };
+            } catch (error) {
+                showLoginError('Failed to connect: ' + error.message);
+            }
+        }
+
+        function leaveRoom() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'leave'
+                }));
+                ws.close();
+            }
+            ws = null;
+            currentRoom = null;
+            chatApp.classList.add('hidden');
+            loginScreen.style.display = 'block';
+            messageContainer.innerHTML = '<div class="message message-system">💕 Welcome to your private space</div>';
+            setConnectionStatus(false);
+            usernameInput.value = 'love';
+            passwordInput.value = '';
+            loginBtn.disabled = false;
+        }
+
+        // ----- Event listeners -----
+        loginBtn.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!username || !password) {
+                showLoginError('Please enter both username and password');
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Connecting... 💕';
+            
+            const roomCode = 'LOVE' + Math.floor(100 + Math.random() * 900);
+            userName = '💕 Partner';
+            
+            loginScreen.style.display = 'none';
+            chatApp.classList.remove('hidden');
+            
+            connectToRoom(roomCode, userName);
+            
+            loginBtn.disabled = false;
+            loginBtn.textContent = '💕 Enter Our World';
+        });
+
+        passwordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+
+        sendBtn.addEventListener('click', () => {
+            const text = messageInput.value.trim();
+            if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+            
+            ws.send(JSON.stringify({
+                type: 'message',
+                text: text,
+                time: new Date().toLocaleTimeString()
+            }));
+            
+            messageInput.value = '';
+            messageInput.focus();
+        });
+
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendBtn.click();
+        });
+
+        leaveBtn.addEventListener('click', leaveRoom);
+
+        usernameInput.focus();
+
+        console.log('💕 Private chat for two!');
+        console.log('⚠️ Make sure to update DEFAULT_SERVER with your Render URL');
+    </script>
+</body>
+</html>
