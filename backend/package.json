@@ -1,7 +1,7 @@
 {
-  "name": "private-chat-backend",
+  "name": "chitchat-backend",
   "version": "1.0.0",
-  "description": "💕 Private chat backend for two",
+  "description": "💕 Private chat for two",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
