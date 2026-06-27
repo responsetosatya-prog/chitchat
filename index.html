@@ -43,7 +43,6 @@
             flex-direction: column;
         }
 
-        /* Login Screen */
         .login-screen {
             background: rgba(20, 26, 38, 0.95);
             backdrop-filter: blur(20px);
@@ -54,11 +53,7 @@
             border: 1px solid rgba(255,255,255,0.05);
             margin: auto;
         }
-        .login-screen .logo {
-            text-align: center;
-            font-size: 48px;
-            margin-bottom: 8px;
-        }
+        .login-screen .logo { text-align: center; font-size: 48px; margin-bottom: 8px; }
         .login-screen h1 {
             text-align: center;
             font-size: 28px;
@@ -68,12 +63,7 @@
             -webkit-text-fill-color: transparent;
             margin-bottom: 4px;
         }
-        .login-screen .sub {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
+        .login-screen .sub { text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
         .login-screen input {
             width: 100%;
             padding: 14px 16px;
@@ -85,10 +75,7 @@
             outline: none;
             margin-bottom: 12px;
         }
-        .login-screen input:focus {
-            border-color: var(--primary);
-            background: rgba(108, 92, 231, 0.1);
-        }
+        .login-screen input:focus { border-color: var(--primary); background: rgba(108, 92, 231, 0.1); }
         .login-screen .btn-primary {
             width: 100%;
             padding: 16px;
@@ -100,30 +87,17 @@
             font-weight: 600;
             cursor: pointer;
         }
-        .login-screen .btn-primary:active {
-            transform: scale(0.97);
-        }
+        .login-screen .btn-primary:active { transform: scale(0.97); }
         .login-screen .toggle-form {
             text-align: center;
             margin-top: 16px;
             color: var(--text-secondary);
             font-size: 14px;
         }
-        .login-screen .toggle-form span {
-            color: var(--primary);
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .login-screen .error-msg {
-            color: #ff6b6b;
-            font-size: 13px;
-            text-align: center;
-            margin-top: 8px;
-            min-height: 20px;
-        }
+        .login-screen .toggle-form span { color: var(--primary); cursor: pointer; font-weight: 600; }
+        .login-screen .error-msg { color: #ff6b6b; font-size: 13px; text-align: center; margin-top: 8px; min-height: 20px; }
         .hidden { display: none !important; }
 
-        /* Chat UI */
         .chat-ui {
             display: none;
             flex: 1;
@@ -138,7 +112,6 @@
         }
         .chat-ui.active { display: flex; }
 
-        /* Chat Header */
         .chat-header {
             padding: 12px 16px;
             background: rgba(0,0,0,0.3);
@@ -148,11 +121,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.05);
             flex-shrink: 0;
         }
-        .chat-header .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .chat-header .user-info { display: flex; align-items: center; gap: 12px; }
         .chat-header .avatar {
             width: 40px;
             height: 40px;
@@ -176,7 +145,6 @@
             cursor: pointer;
         }
 
-        /* Search Bar */
         .search-bar {
             padding: 8px 16px;
             background: rgba(0,0,0,0.2);
@@ -217,7 +185,6 @@
         }
         .search-results .result-item:active { background: rgba(108, 92, 231, 0.2); }
 
-        /* Chat List */
         .chat-list {
             flex: 1;
             overflow-y: auto;
@@ -247,9 +214,8 @@
         }
         .chat-item .chat-info { flex: 1; min-width: 0; }
         .chat-item .chat-info h4 { font-size: 15px; font-weight: 500; }
-        .chat-item .chat-info p { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-item .chat-info p { font-size: 13px; color: var(--text-secondary); }
 
-        /* Chat View */
         .chat-view {
             display: none;
             flex-direction: column;
@@ -321,7 +287,6 @@
         }
         .message .msg-time { font-size: 10px; opacity: 0.6; margin-top: 4px; display: block; }
         .message .msg-sender { font-size: 12px; font-weight: 600; color: #a29bfe; margin-bottom: 2px; display: block; }
-        .message .file-preview { max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 4px; cursor: pointer; }
 
         .input-area {
             padding: 8px 12px;
@@ -354,11 +319,6 @@
         }
         .input-area button:active { transform: scale(0.95); }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         .toast {
             position: fixed;
             bottom: 30px;
@@ -372,6 +332,16 @@
             z-index: 100;
             max-width: 90%;
             text-align: center;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @media (max-width: 480px) {
@@ -467,7 +437,6 @@
         let currentChatId = null;
         let currentChatType = null; // 'user' or 'group'
         let currentChatName = '';
-        let onlineUsers = new Set();
         let friends = [];
 
         // ----- DOM -----
@@ -615,7 +584,7 @@
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    console.log('📨 Received:', data.type, data);
+                    console.log('📨 Received:', data.type);
                     handleWSMessage(data);
                 } catch (e) {
                     console.error('❌ Parse error:', e);
@@ -636,41 +605,42 @@
             switch(data.type) {
                 case 'auth_success':
                     console.log('✅ Authenticated!');
-                    if (data.onlineUsers) {
-                        onlineUsers = new Set(data.onlineUsers);
-                    }
                     loadFriends();
                     break;
 
                 case 'user_status':
                     console.log(`📡 ${data.username} is ${data.status}`);
-                    if (data.status === 'online') {
-                        onlineUsers.add(data.userId);
-                    } else {
-                        onlineUsers.delete(data.userId);
-                    }
                     renderChatList();
                     break;
 
                 case 'private_message':
-                    console.log(`💬 Message from ${data.senderName}: "${data.content}"`);
+                    console.log(`💬 Received from ${data.senderName}: "${data.content}"`);
+                    
+                    // Check if this is the current chat
                     if (currentChatType === 'user' && currentChatId === data.senderId) {
                         addMessage(data, false);
                     }
-                    if (data.senderId !== currentUser.id) {
+                    
+                    // Show notification if not from current user
+                    if (data.senderId !== currentUser?.id) {
                         showToast(`💬 ${data.senderName}: ${data.content}`);
                     }
+                    
+                    // Update chat list
                     renderChatList();
                     break;
 
                 case 'group_message':
                     console.log(`💬 Group message from ${data.senderName}: "${data.content}"`);
+                    
                     if (currentChatType === 'group' && currentChatId === data.groupId) {
                         addMessage(data, false);
                     }
-                    if (data.senderId !== currentUser.id) {
+                    
+                    if (data.senderId !== currentUser?.id) {
                         showToast(`💬 ${data.senderName}: ${data.content}`);
                     }
+                    
                     renderChatList();
                     break;
 
@@ -708,9 +678,9 @@
                     <div class="avatar">${getInitials(f.displayName || f.username)}</div>
                     <div class="chat-info">
                         <h4>${f.displayName || f.username}</h4>
-                        <p>${onlineUsers.has(f.id) ? '🟢 Online' : '⚪ Offline'}</p>
+                        <p>${f.online ? '🟢 Online' : '⚪ Offline'}</p>
                     </div>
-                    <span>${onlineUsers.has(f.id) ? '🟢' : '⚪'}</span>
+                    <span>${f.online ? '🟢' : '⚪'}</span>
                 </div>
             `).join('');
         }
@@ -772,12 +742,9 @@
             div.className = `message ${isSent ? 'sent' : 'received'}`;
 
             let content = msg.content || msg.text || '';
-            if (msg.message_type === 'file' && msg.file_url) {
-                content = `<a href="${API_URL}${msg.file_url}" target="_blank">📎 ${content}</a>`;
-            }
 
             div.innerHTML = `
-                ${!isSent ? `<span class="msg-sender">${msg.display_name || msg.username || 'User'}</span>` : ''}
+                ${!isSent ? `<span class="msg-sender">${msg.senderName || msg.display_name || msg.username || 'User'}</span>` : ''}
                 ${content}
                 <span class="msg-time">${formatTime(msg.created_at || msg.time || new Date())}</span>
             `;
@@ -789,9 +756,13 @@
         // ----- SEND MESSAGE -----
         function sendMessage() {
             const text = messageInput.value.trim();
-            if (!text || !currentChatId) return;
+            if (!text || !currentChatId) {
+                showToast('❌ No message or chat selected');
+                return;
+            }
+            
             if (!ws || ws.readyState !== WebSocket.OPEN) {
-                showToast('❌ Not connected');
+                showToast('❌ Not connected to server');
                 connectWebSocket();
                 return;
             }
@@ -804,7 +775,9 @@
                 time: new Date().toISOString()
             };
 
-            // Add to UI
+            console.log('📤 Sending message:', msgData);
+
+            // Add to UI immediately (optimistic)
             const tempMsg = {
                 sender_id: currentUser.id,
                 content: text,
@@ -817,6 +790,7 @@
             // Send via WebSocket
             ws.send(JSON.stringify(msgData));
             messageInput.value = '';
+            showToast('✅ Message sent');
         }
 
         // ----- SEARCH -----
@@ -830,13 +804,15 @@
             try {
                 const data = await apiCall(`/api/users/search?q=${encodeURIComponent(query)}`);
                 if (data.users && data.users.length) {
-                    searchResults.innerHTML = data.users.map(u => `
-                        <div class="result-item" onclick="addFriend('${u.id}', '${u.displayName || u.username}')">
-                            <span>${getInitials(u.displayName || u.username)}</span>
-                            <span>${u.displayName || u.username}</span>
-                            ${u.online ? '🟢' : '⚪'}
-                        </div>
-                    `).join('');
+                    searchResults.innerHTML = data.users
+                        .filter(u => u.id !== currentUser.id)
+                        .map(u => `
+                            <div class="result-item" onclick="addFriend('${u.id}', '${u.displayName || u.username}')">
+                                <span>${getInitials(u.displayName || u.username)}</span>
+                                <span>${u.displayName || u.username}</span>
+                                ${u.online ? '🟢' : '⚪'}
+                            </div>
+                        `).join('');
                     searchResults.style.display = 'block';
                 } else {
                     searchResults.innerHTML = '<div style="padding:10px 14px;color:var(--text-secondary);">No users found</div>';
