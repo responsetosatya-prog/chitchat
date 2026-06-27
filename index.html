@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>💕 ChitChat</title>
     <style>
-        /* Mobile-first CSS */
         * {
             margin: 0;
             padding: 0;
@@ -15,17 +14,13 @@
 
         :root {
             --primary: #6c5ce7;
-            --primary-light: #a29bfe;
             --primary-dark: #4a3cb5;
             --bg: #0b0e14;
             --bg-light: #1a1f2f;
-            --bg-lighter: #2a3050;
             --text: #eef2fc;
             --text-secondary: #9aa9cf;
             --shadow: 0 4px 20px rgba(0,0,0,0.3);
             --radius: 20px;
-            --radius-sm: 12px;
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         body {
@@ -33,41 +28,19 @@
             color: var(--text);
             height: 100vh;
             overflow: hidden;
-            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
         }
 
-        /* Floating Hearts Background */
-        .hearts-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-            opacity: 0.3;
-        }
-        .heart-float {
-            position: absolute;
-            font-size: 20px;
-            animation: floatUp linear infinite;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(100vh) rotate(0deg); opacity: 0.1; }
-            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
-        }
-
-        /* App Container */
         .app-container {
-            position: relative;
-            z-index: 1;
-            height: 100vh;
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            max-height: 800px;
             display: flex;
             flex-direction: column;
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 8px;
         }
 
         /* Login Screen */
@@ -76,11 +49,10 @@
             backdrop-filter: blur(20px);
             border-radius: var(--radius);
             padding: 32px 24px;
-            margin: auto;
             width: 100%;
-            max-width: 400px;
             box-shadow: var(--shadow);
             border: 1px solid rgba(255,255,255,0.05);
+            margin: auto;
         }
         .login-screen .logo {
             text-align: center;
@@ -107,12 +79,11 @@
             padding: 14px 16px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.08);
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
             color: var(--text);
             font-size: 16px;
             outline: none;
             margin-bottom: 12px;
-            transition: 0.2s;
         }
         .login-screen input:focus {
             border-color: var(--primary);
@@ -123,12 +94,11 @@
             padding: 16px;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             border: none;
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
             color: white;
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
         }
         .login-screen .btn-primary:active {
             transform: scale(0.97);
@@ -151,8 +121,9 @@
             margin-top: 8px;
             min-height: 20px;
         }
+        .hidden { display: none !important; }
 
-        /* Main Chat UI */
+        /* Chat UI */
         .chat-ui {
             display: none;
             flex: 1;
@@ -165,11 +136,9 @@
             border: 1px solid rgba(255,255,255,0.05);
             height: 100%;
         }
-        .chat-ui.active {
-            display: flex;
-        }
+        .chat-ui.active { display: flex; }
 
-        /* Header */
+        /* Chat Header */
         .chat-header {
             padding: 12px 16px;
             background: rgba(0,0,0,0.3);
@@ -188,7 +157,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            background: linear-gradient(135deg, var(--primary), #a29bfe);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -196,18 +165,8 @@
             font-weight: 600;
             color: white;
         }
-        .chat-header .user-details h3 {
-            font-size: 16px;
-            font-weight: 600;
-        }
-        .chat-header .user-details p {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-        .chat-header .header-actions {
-            display: flex;
-            gap: 8px;
-        }
+        .chat-header .user-details h3 { font-size: 16px; font-weight: 600; }
+        .chat-header .user-details p { font-size: 12px; color: var(--text-secondary); }
         .chat-header .header-actions button {
             background: none;
             border: none;
@@ -221,37 +180,34 @@
         .search-bar {
             padding: 8px 16px;
             background: rgba(0,0,0,0.2);
-            display: flex;
-            gap: 8px;
+            position: relative;
             flex-shrink: 0;
         }
         .search-bar input {
-            flex: 1;
+            width: 100%;
             padding: 10px 14px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.08);
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
             color: var(--text);
             font-size: 14px;
             outline: none;
         }
-        .search-bar input:focus {
-            border-color: var(--primary);
-        }
-        .search-bar .search-results {
+        .search-bar input:focus { border-color: var(--primary); }
+        .search-results {
             display: none;
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
             background: var(--bg-light);
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
             max-height: 200px;
             overflow-y: auto;
             z-index: 10;
             box-shadow: var(--shadow);
         }
-        .search-bar .search-results .result-item {
+        .search-results .result-item {
             padding: 10px 14px;
             display: flex;
             align-items: center;
@@ -259,9 +215,7 @@
             cursor: pointer;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .search-bar .search-results .result-item:active {
-            background: rgba(108, 92, 231, 0.2);
-        }
+        .search-results .result-item:active { background: rgba(108, 92, 231, 0.2); }
 
         /* Chat List */
         .chat-list {
@@ -269,23 +223,20 @@
             overflow-y: auto;
             padding: 8px 0;
         }
-        .chat-list .chat-item {
+        .chat-item {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 12px 16px;
             cursor: pointer;
-            transition: 0.15s;
             border-bottom: 1px solid rgba(255,255,255,0.03);
         }
-        .chat-list .chat-item:active {
-            background: rgba(108, 92, 231, 0.1);
-        }
-        .chat-list .chat-item .avatar {
+        .chat-item:active { background: rgba(108, 92, 231, 0.1); }
+        .chat-item .avatar {
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            background: linear-gradient(135deg, var(--primary), #a29bfe);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -294,39 +245,9 @@
             color: white;
             flex-shrink: 0;
         }
-        .chat-list .chat-item .chat-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .chat-list .chat-item .chat-info h4 {
-            font-size: 15px;
-            font-weight: 500;
-        }
-        .chat-list .chat-item .chat-info p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .chat-list .chat-item .chat-time {
-            font-size: 11px;
-            color: var(--text-secondary);
-            flex-shrink: 0;
-        }
-        .chat-list .chat-item .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-        .chat-list .chat-item .status-dot.online {
-            background: #00e676;
-        }
-        .chat-list .chat-item .status-dot.offline {
-            background: #ff5252;
-        }
+        .chat-item .chat-info { flex: 1; min-width: 0; }
+        .chat-item .chat-info h4 { font-size: 15px; font-weight: 500; }
+        .chat-item .chat-info p { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* Chat View */
         .chat-view {
@@ -335,9 +256,7 @@
             flex: 1;
             height: 100%;
         }
-        .chat-view.active {
-            display: flex;
-        }
+        .chat-view.active { display: flex; }
 
         .chat-view .chat-view-header {
             padding: 12px 16px;
@@ -360,7 +279,7 @@
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            background: linear-gradient(135deg, var(--primary), #a29bfe);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -369,17 +288,9 @@
             color: white;
             flex-shrink: 0;
         }
-        .chat-view .chat-view-header .chat-name {
-            flex: 1;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        .chat-view .chat-view-header .chat-status {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
+        .chat-view .chat-view-header .chat-name { flex: 1; font-weight: 600; font-size: 16px; }
 
-        .chat-view .messages-container {
+        .messages-container {
             flex: 1;
             overflow-y: auto;
             padding: 12px 16px;
@@ -388,7 +299,7 @@
             gap: 6px;
         }
 
-        .chat-view .message {
+        .message {
             max-width: 85%;
             padding: 10px 14px;
             border-radius: 16px;
@@ -397,65 +308,22 @@
             word-wrap: break-word;
             animation: fadeIn 0.2s ease;
         }
-        .chat-view .message.sent {
+        .message.sent {
             align-self: flex-end;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
             border-bottom-right-radius: 4px;
         }
-        .chat-view .message.received {
+        .message.received {
             align-self: flex-start;
             background: var(--bg-light);
             border-bottom-left-radius: 4px;
         }
-        .chat-view .message .msg-time {
-            font-size: 10px;
-            opacity: 0.6;
-            margin-top: 4px;
-            display: block;
-        }
-        .chat-view .message .msg-sender {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--primary-light);
-            margin-bottom: 2px;
-            display: block;
-        }
-        .chat-view .message .file-preview {
-            max-width: 200px;
-            max-height: 200px;
-            border-radius: 8px;
-            margin-top: 4px;
-            cursor: pointer;
-        }
-        .chat-view .message .file-preview video,
-        .chat-view .message .file-preview audio {
-            max-width: 100%;
-            border-radius: 8px;
-        }
-        .chat-view .message .file-link {
-            color: var(--primary-light);
-            text-decoration: underline;
-            word-break: break-all;
-        }
-        .chat-view .message .file-link:active {
-            color: var(--primary);
-        }
+        .message .msg-time { font-size: 10px; opacity: 0.6; margin-top: 4px; display: block; }
+        .message .msg-sender { font-size: 12px; font-weight: 600; color: #a29bfe; margin-bottom: 2px; display: block; }
+        .message .file-preview { max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 4px; cursor: pointer; }
 
-        .chat-view .typing-indicator {
-            align-self: flex-start;
-            padding: 8px 14px;
-            background: var(--bg-light);
-            border-radius: 16px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            display: none;
-        }
-        .chat-view .typing-indicator.active {
-            display: block;
-        }
-
-        .chat-view .input-area {
+        .input-area {
             padding: 8px 12px;
             background: rgba(0,0,0,0.2);
             border-top: 1px solid rgba(255,255,255,0.05);
@@ -464,91 +332,56 @@
             align-items: center;
             flex-shrink: 0;
         }
-        .chat-view .input-area .attach-btn {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 22px;
-            cursor: pointer;
-            padding: 4px 6px;
-        }
-        .chat-view .input-area input {
+        .input-area input {
             flex: 1;
             padding: 10px 14px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.08);
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
             color: var(--text);
             font-size: 15px;
             outline: none;
         }
-        .chat-view .input-area input:focus {
-            border-color: var(--primary);
-        }
-        .chat-view .input-area .send-btn {
+        .input-area input:focus { border-color: var(--primary); }
+        .input-area button {
             padding: 10px 16px;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             border: none;
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
             color: white;
             font-size: 18px;
             cursor: pointer;
         }
-        .chat-view .input-area .send-btn:active {
-            transform: scale(0.95);
-        }
-
-        .hidden {
-            display: none !important;
-        }
+        .input-area button:active { transform: scale(0.95); }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Mobile Responsive */
-        @media (max-width: 480px) {
-            .app-container { padding: 4px; }
-            .login-screen { padding: 24px 16px; margin: 8px; }
-            .chat-ui { border-radius: 16px; }
-            .chat-view .message { max-width: 92%; }
-            .chat-header .user-details h3 { font-size: 14px; }
-            .chat-header .user-details p { font-size: 11px; }
-            .search-bar input { font-size: 13px; padding: 8px 12px; }
-            .chat-list .chat-item { padding: 10px 12px; }
-            .chat-view .input-area input { font-size: 14px; }
-        }
-
-        @media (min-width: 768px) {
-            .app-container { max-width: 600px; }
-        }
-
-        /* Toast notifications */
         .toast {
             position: fixed;
-            bottom: 80px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--bg-light);
             color: var(--text);
             padding: 12px 24px;
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
             box-shadow: var(--shadow);
             z-index: 100;
-            border: 1px solid rgba(255,255,255,0.05);
-            animation: slideUp 0.3s ease;
             max-width: 90%;
+            text-align: center;
         }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        @media (max-width: 480px) {
+            body { padding: 4px; }
+            .login-screen { padding: 24px 16px; }
+            .message { max-width: 92%; }
         }
     </style>
 </head>
 <body>
-
-    <div class="hearts-bg" id="heartsBg"></div>
 
     <div class="app-container">
         <!-- Login Screen -->
@@ -566,7 +399,7 @@
             </div>
             <div id="registerForm" class="hidden">
                 <input type="text" id="regUsername" placeholder="Username" />
-                <input type="text" id="regDisplayName" placeholder="Display Name (optional)" />
+                <input type="text" id="regDisplayName" placeholder="Display Name" />
                 <input type="password" id="regPassword" placeholder="Password" />
                 <button class="btn-primary" id="registerBtn">Create Account</button>
                 <div class="toggle-form">
@@ -576,9 +409,8 @@
             <div class="error-msg" id="authError"></div>
         </div>
 
-        <!-- Main Chat UI -->
+        <!-- Chat UI -->
         <div class="chat-ui" id="chatUi">
-            <!-- Header -->
             <div class="chat-header">
                 <div class="user-info">
                     <div class="avatar" id="myAvatar">💕</div>
@@ -588,17 +420,15 @@
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button id="logoutBtn" title="Logout">🚪</button>
+                    <button id="logoutBtn">🚪</button>
                 </div>
             </div>
 
-            <!-- Search -->
-            <div class="search-bar" style="position:relative;">
+            <div class="search-bar">
                 <input type="text" id="searchInput" placeholder="Search users..." />
                 <div class="search-results" id="searchResults"></div>
             </div>
 
-            <!-- Chat List -->
             <div class="chat-list" id="chatList">
                 <div style="text-align:center;color:var(--text-secondary);padding:40px 20px;">
                     <div style="font-size:48px;margin-bottom:12px;">💬</div>
@@ -606,47 +436,41 @@
                 </div>
             </div>
 
-            <!-- Chat View -->
             <div class="chat-view" id="chatView">
                 <div class="chat-view-header">
                     <button class="back-btn" id="backToChats">←</button>
                     <div class="avatar" id="chatAvatar">👤</div>
                     <div class="chat-name" id="chatName">User</div>
-                    <div class="chat-status" id="chatStatus">offline</div>
                 </div>
                 <div class="messages-container" id="messagesContainer">
                     <div style="text-align:center;color:var(--text-secondary);padding:40px 20px;font-size:14px;">
                         No messages yet. Start chatting! 💕
                     </div>
                 </div>
-                <div class="typing-indicator" id="typingIndicator">Someone is typing...</div>
                 <div class="input-area">
-                    <button class="attach-btn" id="attachBtn">📎</button>
                     <input type="text" id="messageInput" placeholder="Type a message..." />
-                    <button class="send-btn" id="sendBtn">➤</button>
+                    <button id="sendBtn">➤</button>
                 </div>
-                <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,video/*,audio/*" />
             </div>
         </div>
     </div>
 
     <script>
-    (function() {
-        'use strict';
-
-        // Configuration
+        // ----- CONFIGURATION -----
         const API_URL = 'https://chitchat-backend-61t4.onrender.com';
         const WS_URL = 'wss://chitchat-backend-61t4.onrender.com';
 
-        // State
+        // ----- STATE -----
         let currentUser = null;
         let token = null;
         let ws = null;
-        let currentChat = null;
-        let chats = [];
+        let currentChatId = null;
+        let currentChatType = null; // 'user' or 'group'
+        let currentChatName = '';
         let onlineUsers = new Set();
+        let friends = [];
 
-        // DOM Elements
+        // ----- DOM -----
         const $ = id => document.getElementById(id);
         const loginScreen = $('loginScreen');
         const chatUi = $('chatUi');
@@ -672,31 +496,14 @@
         const backToChats = $('backToChats');
         const chatAvatar = $('chatAvatar');
         const chatName = $('chatName');
-        const chatStatus = $('chatStatus');
         const messagesContainer = $('messagesContainer');
         const messageInput = $('messageInput');
         const sendBtn = $('sendBtn');
-        const attachBtn = $('attachBtn');
-        const fileInput = $('fileInput');
 
-        // Utility
+        // ----- UTILITY -----
         function showAuthError(msg) {
             authError.textContent = msg;
             setTimeout(() => authError.textContent = '', 4000);
-        }
-
-        function formatTime(date) {
-            const d = new Date(date);
-            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function getInitials(name) {
-            if (!name) return '👤';
-            return name.charAt(0).toUpperCase();
-        }
-
-        function getAvatar(user) {
-            return user.avatar || getInitials(user.displayName || user.username);
         }
 
         function showToast(msg) {
@@ -709,155 +516,27 @@
             setTimeout(() => div.remove(), 3000);
         }
 
-        // Hearts Background
-        function createHearts() {
-            const container = document.getElementById('heartsBg');
-            const emojis = ['❤️', '💕', '💗', '💖', '💝', '💘'];
-            for (let i = 0; i < 15; i++) {
-                const heart = document.createElement('div');
-                heart.className = 'heart-float';
-                heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-                heart.style.left = Math.random() * 100 + '%';
-                heart.style.fontSize = (Math.random() * 15 + 12) + 'px';
-                heart.style.animationDuration = (Math.random() * 15 + 12) + 's';
-                heart.style.animationDelay = (Math.random() * 10) + 's';
-                container.appendChild(heart);
-            }
-        }
-        createHearts();
-
-        // WebSocket Connection
-        function connectWebSocket() {
-            if (!token) {
-                console.log('⚠️ No token, can\'t connect');
-                return;
-            }
-            
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                console.log('⚠️ WebSocket already open');
-                return;
-            }
-
-            console.log('🔗 Connecting WebSocket...');
-            ws = new WebSocket(WS_URL);
-
-            ws.onopen = () => {
-                console.log('🔗 WebSocket opened, sending auth...');
-                ws.send(JSON.stringify({
-                    type: 'auth',
-                    token: token
-                }));
-            };
-
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    console.log('📨 Received:', data.type);
-                    handleWebSocketMessage(data);
-                } catch (e) {
-                    console.error('❌ Parse error:', e);
-                }
-            };
-
-            ws.onclose = () => {
-                console.log('🔌 WebSocket closed');
-                // Try to reconnect after 5 seconds
-                setTimeout(() => {
-                    if (token) {
-                        console.log('🔄 Reconnecting...');
-                        connectWebSocket();
-                    }
-                }, 5000);
-            };
-
-            ws.onerror = (error) => {
-                console.error('❌ WebSocket error:', error);
-            };
+        function formatTime(date) {
+            return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        function handleWebSocketMessage(data) {
-            switch(data.type) {
-                case 'auth_success':
-                    console.log('✅ Authenticated successfully!');
-                    if (data.onlineUsers) {
-                        onlineUsers = new Set(data.onlineUsers);
-                    }
-                    loadChats();
-                    break;
-
-                case 'auth_error':
-                    console.log('❌ Auth error:', data.message);
-                    showToast('❌ ' + data.message);
-                    break;
-
-                case 'user_status':
-                    console.log(`📡 ${data.username} is ${data.status}`);
-                    if (data.status === 'online') {
-                        onlineUsers.add(data.userId);
-                    } else {
-                        onlineUsers.delete(data.userId);
-                    }
-                    updateChatList();
-                    updateChatStatus();
-                    break;
-
-                case 'private_message':
-                    console.log(`💬 Private message from ${data.senderName}`);
-                    if (currentChat && currentChat.type === 'user' && currentChat.id === data.senderId) {
-                        addMessageToChat(data, false);
-                    }
-                    updateChatList();
-                    if (data.senderId !== currentUser?.id) {
-                        showToast(`💬 ${data.senderName}: ${data.content}`);
-                    }
-                    break;
-
-                case 'group_message':
-                    console.log(`💬 Group message from ${data.senderName}`);
-                    if (currentChat && currentChat.type === 'group' && currentChat.id === data.groupId) {
-                        addMessageToChat(data, false);
-                    }
-                    updateChatList();
-                    if (data.senderId !== currentUser?.id) {
-                        showToast(`💬 ${data.senderName}: ${data.content}`);
-                    }
-                    break;
-
-                case 'typing':
-                    if (currentChat && currentChat.type === 'user' && currentChat.id === data.userId) {
-                        if (data.isTyping) {
-                            showToast(`✏️ ${data.username || 'Someone'} is typing...`);
-                        }
-                    }
-                    break;
-
-                case 'error':
-                    showToast('❌ ' + data.message);
-                    break;
-            }
+        function getInitials(name) {
+            return name ? name.charAt(0).toUpperCase() : '👤';
         }
 
-        // API Calls
+        // ----- API -----
         async function apiCall(endpoint, options = {}) {
-            const headers = {
-                'Content-Type': 'application/json',
-                ...options.headers
-            };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'API error');
             }
-            const response = await fetch(`${API_URL}${endpoint}`, {
-                ...options,
-                headers
-            });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'API error');
-            }
-            return response.json();
+            return res.json();
         }
 
-        // Auth
+        // ----- AUTH -----
         async function login(username, password) {
             try {
                 const data = await apiCall('/api/login', {
@@ -869,8 +548,8 @@
                 localStorage.setItem('chitchat_token', token);
                 localStorage.setItem('chitchat_user', JSON.stringify(currentUser));
                 showApp();
-            } catch (error) {
-                showAuthError(error.message || 'Login failed');
+            } catch (e) {
+                showAuthError(e.message);
             }
         }
 
@@ -885,20 +564,12 @@
                 localStorage.setItem('chitchat_token', token);
                 localStorage.setItem('chitchat_user', JSON.stringify(currentUser));
                 showApp();
-            } catch (error) {
-                showAuthError(error.message || 'Registration failed');
+            } catch (e) {
+                showAuthError(e.message);
             }
         }
 
         async function logout() {
-            if (token) {
-                try {
-                    await apiCall('/api/logout', {
-                        method: 'POST',
-                        body: JSON.stringify({ token })
-                    });
-                } catch (e) {}
-            }
             if (ws) {
                 ws.send(JSON.stringify({ type: 'logout' }));
                 ws.close();
@@ -908,16 +579,15 @@
             token = null;
             currentUser = null;
             ws = null;
-            onlineUsers.clear();
             showLoginScreen();
         }
 
-        // UI Navigation
+        // ----- UI NAV -----
         function showApp() {
             loginScreen.style.display = 'none';
             chatUi.classList.add('active');
             myDisplayName.textContent = currentUser.displayName || currentUser.username;
-            myAvatar.textContent = getAvatar(currentUser);
+            myAvatar.textContent = getInitials(currentUser.displayName || currentUser.username);
             connectWebSocket();
         }
 
@@ -929,42 +599,101 @@
             messagesContainer.innerHTML = '';
         }
 
-        // Load Chats
-        async function loadChats() {
-            try {
-                const friendsData = await apiCall(`/api/users/${currentUser.id}/friends`);
-                const groupsData = await apiCall(`/api/users/${currentUser.id}/groups`);
-                
-                chats = [
-                    ...friendsData.friends.map(f => ({
-                        type: 'user',
-                        id: f.id,
-                        name: f.displayName || f.username,
-                        avatar: getAvatar(f),
-                        online: onlineUsers.has(f.id),
-                        lastMessage: '',
-                        lastTime: ''
-                    })),
-                    ...groupsData.groups.map(g => ({
-                        type: 'group',
-                        id: g.id,
-                        name: g.name,
-                        avatar: '👥',
-                        online: true,
-                        lastMessage: '',
-                        lastTime: ''
-                    }))
-                ];
-                updateChatList();
-            } catch (error) {
-                console.error('Load chats error:', error);
-                showToast('❌ Failed to load chats');
+        // ----- WEBSOCKET -----
+        function connectWebSocket() {
+            if (!token) return;
+            if (ws && ws.readyState === WebSocket.OPEN) return;
+
+            console.log('🔗 Connecting WebSocket...');
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('🔗 WebSocket opened, sending auth...');
+                ws.send(JSON.stringify({ type: 'auth', token: token }));
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('📨 Received:', data.type, data);
+                    handleWSMessage(data);
+                } catch (e) {
+                    console.error('❌ Parse error:', e);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('🔌 WebSocket closed');
+                setTimeout(() => { if (token) connectWebSocket(); }, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+            };
+        }
+
+        function handleWSMessage(data) {
+            switch(data.type) {
+                case 'auth_success':
+                    console.log('✅ Authenticated!');
+                    if (data.onlineUsers) {
+                        onlineUsers = new Set(data.onlineUsers);
+                    }
+                    loadFriends();
+                    break;
+
+                case 'user_status':
+                    console.log(`📡 ${data.username} is ${data.status}`);
+                    if (data.status === 'online') {
+                        onlineUsers.add(data.userId);
+                    } else {
+                        onlineUsers.delete(data.userId);
+                    }
+                    renderChatList();
+                    break;
+
+                case 'private_message':
+                    console.log(`💬 Message from ${data.senderName}: "${data.content}"`);
+                    if (currentChatType === 'user' && currentChatId === data.senderId) {
+                        addMessage(data, false);
+                    }
+                    if (data.senderId !== currentUser.id) {
+                        showToast(`💬 ${data.senderName}: ${data.content}`);
+                    }
+                    renderChatList();
+                    break;
+
+                case 'group_message':
+                    console.log(`💬 Group message from ${data.senderName}: "${data.content}"`);
+                    if (currentChatType === 'group' && currentChatId === data.groupId) {
+                        addMessage(data, false);
+                    }
+                    if (data.senderId !== currentUser.id) {
+                        showToast(`💬 ${data.senderName}: ${data.content}`);
+                    }
+                    renderChatList();
+                    break;
+
+                case 'error':
+                    showToast('❌ ' + data.message);
+                    break;
             }
         }
 
-        // Update Chat List
-        function updateChatList() {
-            if (!chats.length) {
+        // ----- FRIENDS -----
+        async function loadFriends() {
+            try {
+                const data = await apiCall(`/api/users/${currentUser.id}/friends`);
+                friends = data.friends || [];
+                renderChatList();
+            } catch (e) {
+                console.error('Load friends error:', e);
+            }
+        }
+
+        // ----- RENDER -----
+        function renderChatList() {
+            if (!friends.length) {
                 chatList.innerHTML = `
                     <div style="text-align:center;color:var(--text-secondary);padding:40px 20px;">
                         <div style="font-size:48px;margin-bottom:12px;">💬</div>
@@ -974,54 +703,38 @@
                 return;
             }
 
-            chatList.innerHTML = chats.map(chat => `
-                <div class="chat-item" data-type="${chat.type}" data-id="${chat.id}" onclick="window.openChat('${chat.type}', '${chat.id}')">
-                    <div class="avatar">${chat.avatar || '👤'}</div>
+            chatList.innerHTML = friends.map(f => `
+                <div class="chat-item" onclick="openChat('user', '${f.id}', '${f.displayName || f.username}')">
+                    <div class="avatar">${getInitials(f.displayName || f.username)}</div>
                     <div class="chat-info">
-                        <h4>${chat.name}</h4>
-                        <p>${chat.lastMessage || 'Tap to chat'}</p>
+                        <h4>${f.displayName || f.username}</h4>
+                        <p>${onlineUsers.has(f.id) ? '🟢 Online' : '⚪ Offline'}</p>
                     </div>
-                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                        ${chat.online ? '🟢' : '⚪'}
-                        <span class="chat-time">${chat.lastTime || ''}</span>
-                    </div>
+                    <span>${onlineUsers.has(f.id) ? '🟢' : '⚪'}</span>
                 </div>
             `).join('');
         }
 
-        // Open Chat
-        window.openChat = function(type, id) {
-            const chat = chats.find(c => c.type === type && c.id === id);
-            if (!chat) return;
-            
-            currentChat = {
-                type: type,
-                id: id,
-                name: chat.name,
-                avatar: chat.avatar
-            };
-            
+        // ----- OPEN CHAT -----
+        window.openChat = function(type, id, name) {
+            currentChatId = id;
+            currentChatType = type;
+            currentChatName = name;
+
             chatView.classList.add('active');
-            chatName.textContent = chat.name;
-            chatAvatar.textContent = chat.avatar || '👤';
-            updateChatStatus();
-            
+            chatName.textContent = name;
+            chatAvatar.textContent = getInitials(name);
+
+            messagesContainer.innerHTML = `
+                <div style="text-align:center;color:var(--text-secondary);padding:40px 20px;font-size:14px;">
+                    Loading messages...
+                </div>
+            `;
+
             loadMessages(type, id);
         };
 
-        function updateChatStatus() {
-            if (!currentChat) return;
-            if (currentChat.type === 'user') {
-                const isOnline = onlineUsers.has(currentChat.id);
-                chatStatus.textContent = isOnline ? '🟢 Online' : '⚪ Offline';
-                chatStatus.style.color = isOnline ? '#00e676' : '#ff5252';
-            } else {
-                chatStatus.textContent = '👥 Group';
-                chatStatus.style.color = '#9aa9cf';
-            }
-        }
-
-        // Load Messages
+        // ----- LOAD MESSAGES -----
         async function loadMessages(type, id) {
             try {
                 let endpoint;
@@ -1034,7 +747,7 @@
                 messagesContainer.innerHTML = '';
                 if (data.messages && data.messages.length) {
                     data.messages.forEach(msg => {
-                        addMessageToChat(msg, msg.sender_id === currentUser.id);
+                        addMessage(msg, msg.sender_id === currentUser.id);
                     });
                 } else {
                     messagesContainer.innerHTML = `
@@ -1044,74 +757,54 @@
                     `;
                 }
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            } catch (error) {
-                console.error('Load messages error:', error);
+            } catch (e) {
+                console.error('Load messages error:', e);
                 showToast('❌ Failed to load messages');
             }
         }
 
-        // Add Message to Chat View
-        function addMessageToChat(msg, isSent) {
-            const emptyState = messagesContainer.querySelector('div[style]');
-            if (emptyState) emptyState.remove();
+        // ----- ADD MESSAGE -----
+        function addMessage(msg, isSent) {
+            const empty = messagesContainer.querySelector('div[style]');
+            if (empty) empty.remove();
 
             const div = document.createElement('div');
             div.className = `message ${isSent ? 'sent' : 'received'}`;
-            
-            let content = '';
-            if (msg.message_type === 'text') {
-                content = msg.content || msg.text || '';
-            } else if (msg.message_type === 'file') {
-                const fileUrl = msg.file_url || msg.fileUrl;
-                const fileType = msg.file_type || msg.fileType;
-                if (fileType && fileType.startsWith('image/')) {
-                    content = `<img src="${API_URL}${fileUrl}" class="file-preview" onclick="window.open('${API_URL}${fileUrl}','_blank')" />`;
-                } else if (fileType && fileType.startsWith('video/')) {
-                    content = `<video controls class="file-preview"><source src="${API_URL}${fileUrl}" type="${fileType}"></video>`;
-                } else if (fileType && fileType.startsWith('audio/')) {
-                    content = `<audio controls><source src="${API_URL}${fileUrl}" type="${fileType}"></audio>`;
-                } else {
-                    content = `<a href="${API_URL}${fileUrl}" target="_blank" class="file-link">📎 Download file</a>`;
-                }
-            } else if (msg.message_type === 'link') {
-                content = `<a href="${msg.content}" target="_blank" class="file-link">🔗 ${msg.content}</a>`;
+
+            let content = msg.content || msg.text || '';
+            if (msg.message_type === 'file' && msg.file_url) {
+                content = `<a href="${API_URL}${msg.file_url}" target="_blank">📎 ${content}</a>`;
             }
 
-            const senderName = msg.display_name || msg.username || 'Unknown';
-            const time = formatTime(msg.created_at || msg.time || new Date());
-
             div.innerHTML = `
-                ${!isSent ? `<span class="msg-sender">${senderName}</span>` : ''}
+                ${!isSent ? `<span class="msg-sender">${msg.display_name || msg.username || 'User'}</span>` : ''}
                 ${content}
-                <span class="msg-time">${time}</span>
+                <span class="msg-time">${formatTime(msg.created_at || msg.time || new Date())}</span>
             `;
-            
+
             messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // Send Message
+        // ----- SEND MESSAGE -----
         function sendMessage() {
             const text = messageInput.value.trim();
-            if (!text || !currentChat) {
-                return;
-            }
-            
+            if (!text || !currentChatId) return;
             if (!ws || ws.readyState !== WebSocket.OPEN) {
-                showToast('❌ Not connected to server');
+                showToast('❌ Not connected');
                 connectWebSocket();
                 return;
             }
 
             const msgData = {
-                type: currentChat.type === 'user' ? 'private_message' : 'group_message',
-                [currentChat.type === 'user' ? 'receiverId' : 'groupId']: currentChat.id,
+                type: currentChatType === 'user' ? 'private_message' : 'group_message',
+                [currentChatType === 'user' ? 'receiverId' : 'groupId']: currentChatId,
                 content: text,
                 messageType: 'text',
                 time: new Date().toISOString()
             };
 
-            // Add to UI immediately
+            // Add to UI
             const tempMsg = {
                 sender_id: currentUser.id,
                 content: text,
@@ -1119,62 +812,14 @@
                 message_type: 'text',
                 display_name: currentUser.displayName
             };
-            addMessageToChat(tempMsg, true);
+            addMessage(tempMsg, true);
 
             // Send via WebSocket
             ws.send(JSON.stringify(msgData));
             messageInput.value = '';
         }
 
-        // Send File
-        async function sendFile(file) {
-            if (!currentChat || !ws || ws.readyState !== WebSocket.OPEN) {
-                showToast('❌ Not connected');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch(`${API_URL}/api/upload`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-                const data = await response.json();
-                
-                const msgData = {
-                    type: currentChat.type === 'user' ? 'private_message' : 'group_message',
-                    [currentChat.type === 'user' ? 'receiverId' : 'groupId']: currentChat.id,
-                    content: file.name,
-                    fileUrl: data.fileUrl,
-                    fileType: data.fileType,
-                    messageType: 'file',
-                    time: new Date().toISOString()
-                };
-
-                // Add to UI immediately
-                const tempMsg = {
-                    sender_id: currentUser.id,
-                    content: file.name,
-                    file_url: data.fileUrl,
-                    file_type: data.fileType,
-                    message_type: 'file',
-                    created_at: new Date().toISOString(),
-                    display_name: currentUser.displayName
-                };
-                addMessageToChat(tempMsg, true);
-
-                ws.send(JSON.stringify(msgData));
-            } catch (error) {
-                showToast('File upload failed: ' + error.message);
-            }
-        }
-
-        // Search Users
+        // ----- SEARCH -----
         searchInput.addEventListener('input', async function() {
             const query = this.value.trim();
             if (query.length < 2) {
@@ -1186,8 +831,8 @@
                 const data = await apiCall(`/api/users/search?q=${encodeURIComponent(query)}`);
                 if (data.users && data.users.length) {
                     searchResults.innerHTML = data.users.map(u => `
-                        <div class="result-item" data-id="${u.id}" onclick="window.startChat('${u.id}', '${u.displayName || u.username}')">
-                            <span style="font-size:20px;">${getAvatar(u)}</span>
+                        <div class="result-item" onclick="addFriend('${u.id}', '${u.displayName || u.username}')">
+                            <span>${getInitials(u.displayName || u.username)}</span>
                             <span>${u.displayName || u.username}</span>
                             ${u.online ? '🟢' : '⚪'}
                         </div>
@@ -1197,8 +842,8 @@
                     searchResults.innerHTML = '<div style="padding:10px 14px;color:var(--text-secondary);">No users found</div>';
                     searchResults.style.display = 'block';
                 }
-            } catch (error) {
-                console.error('Search error:', error);
+            } catch (e) {
+                console.error('Search error:', e);
             }
         });
 
@@ -1208,28 +853,23 @@
             }
         });
 
-        window.startChat = function(userId, name) {
+        async function addFriend(userId, name) {
             searchResults.style.display = 'none';
             searchInput.value = '';
             
-            let chat = chats.find(c => c.type === 'user' && c.id === userId);
-            if (!chat) {
-                chat = {
-                    type: 'user',
-                    id: userId,
-                    name: name,
-                    avatar: getInitials(name),
-                    online: onlineUsers.has(userId),
-                    lastMessage: '',
-                    lastTime: ''
-                };
-                chats.unshift(chat);
+            try {
+                await apiCall(`/api/users/${currentUser.id}/friends`, {
+                    method: 'POST',
+                    body: JSON.stringify({ friendId: userId })
+                });
+                showToast(`✅ Added ${name} as friend!`);
+                loadFriends();
+            } catch (e) {
+                showToast('❌ ' + e.message);
             }
-            updateChatList();
-            openChat('user', userId);
-        };
+        }
 
-        // Event Listeners
+        // ----- EVENT LISTENERS -----
         loginBtn.addEventListener('click', () => {
             login(loginUsername.value.trim(), loginPassword.value.trim());
         });
@@ -1254,24 +894,14 @@
 
         backToChats.addEventListener('click', () => {
             chatView.classList.remove('active');
-            currentChat = null;
+            currentChatId = null;
+            currentChatType = null;
         });
 
         sendBtn.addEventListener('click', sendMessage);
 
         messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendMessage();
-        });
-
-        attachBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                sendFile(e.target.files[0]);
-                fileInput.value = '';
-            }
         });
 
         loginPassword.addEventListener('keydown', (e) => {
@@ -1281,7 +911,7 @@
             if (e.key === 'Enter') registerBtn.click();
         });
 
-        // Auto-login
+        // ----- AUTO-LOGIN -----
         (function init() {
             const savedToken = localStorage.getItem('chitchat_token');
             const savedUser = localStorage.getItem('chitchat_user');
@@ -1293,10 +923,7 @@
         })();
 
         console.log('💕 ChitChat loaded!');
-        console.log('🔑 Using API:', API_URL);
-        console.log('📡 Using WS:', WS_URL);
-
-    })();
-</script>
+        console.log('📡 Server:', API_URL);
+    </script>
 </body>
 </html>
