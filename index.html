@@ -634,11 +634,11 @@
     (function() {
         'use strict';
 
-        // ----- Configuration -----
+        // Configuration
         const API_URL = 'https://chitchat-backend-61t4.onrender.com';
         const WS_URL = 'wss://chitchat-backend-61t4.onrender.com';
 
-        // ----- State -----
+        // State
         let currentUser = null;
         let token = null;
         let ws = null;
@@ -646,7 +646,7 @@
         let chats = [];
         let onlineUsers = new Set();
 
-        // ----- DOM Elements -----
+        // DOM Elements
         const $ = id => document.getElementById(id);
         const loginScreen = $('loginScreen');
         const chatUi = $('chatUi');
@@ -664,7 +664,6 @@
         const regPassword = $('regPassword');
         const myDisplayName = $('myDisplayName');
         const myAvatar = $('myAvatar');
-        const myStatus = $('myStatus');
         const logoutBtn = $('logoutBtn');
         const searchInput = $('searchInput');
         const searchResults = $('searchResults');
@@ -675,13 +674,12 @@
         const chatName = $('chatName');
         const chatStatus = $('chatStatus');
         const messagesContainer = $('messagesContainer');
-        const typingIndicator = $('typingIndicator');
         const messageInput = $('messageInput');
         const sendBtn = $('sendBtn');
         const attachBtn = $('attachBtn');
         const fileInput = $('fileInput');
 
-        // ----- Utility -----
+        // Utility
         function showAuthError(msg) {
             authError.textContent = msg;
             setTimeout(() => authError.textContent = '', 4000);
@@ -694,9 +692,7 @@
 
         function getInitials(name) {
             if (!name) return '👤';
-            const parts = name.split(' ');
-            if (parts.length === 1) return name.charAt(0).toUpperCase();
-            return (parts[0].charAt(0) + parts[parts.length-1].charAt(0)).toUpperCase();
+            return name.charAt(0).toUpperCase();
         }
 
         function getAvatar(user) {
@@ -713,7 +709,7 @@
             setTimeout(() => div.remove(), 3000);
         }
 
-        // ----- Hearts Background -----
+        // Hearts Background
         function createHearts() {
             const container = document.getElementById('heartsBg');
             const emojis = ['❤️', '💕', '💗', '💖', '💝', '💘'];
@@ -730,18 +726,23 @@
         }
         createHearts();
 
-        // ----- WebSocket Connection -----
+        // WebSocket Connection
         function connectWebSocket() {
-            if (!token) return;
+            if (!token) {
+                console.log('⚠️ No token, can\'t connect');
+                return;
+            }
             
             if (ws && ws.readyState === WebSocket.OPEN) {
+                console.log('⚠️ WebSocket already open');
                 return;
             }
 
+            console.log('🔗 Connecting WebSocket...');
             ws = new WebSocket(WS_URL);
 
             ws.onopen = () => {
-                console.log('🔗 WebSocket connected');
+                console.log('🔗 WebSocket opened, sending auth...');
                 ws.send(JSON.stringify({
                     type: 'auth',
                     token: token
@@ -751,16 +752,22 @@
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    console.log('📨 WS Message:', data.type);
+                    console.log('📨 Received:', data.type);
                     handleWebSocketMessage(data);
                 } catch (e) {
-                    console.error('WS parse error:', e);
+                    console.error('❌ Parse error:', e);
                 }
             };
 
             ws.onclose = () => {
-                console.log('🔌 WebSocket disconnected');
-                setTimeout(connectWebSocket, 3000);
+                console.log('🔌 WebSocket closed');
+                // Try to reconnect after 5 seconds
+                setTimeout(() => {
+                    if (token) {
+                        console.log('🔄 Reconnecting...');
+                        connectWebSocket();
+                    }
+                }, 5000);
             };
 
             ws.onerror = (error) => {
@@ -771,12 +778,20 @@
         function handleWebSocketMessage(data) {
             switch(data.type) {
                 case 'auth_success':
-                    console.log('✅ WebSocket authenticated');
+                    console.log('✅ Authenticated successfully!');
+                    if (data.onlineUsers) {
+                        onlineUsers = new Set(data.onlineUsers);
+                    }
                     loadChats();
                     break;
 
+                case 'auth_error':
+                    console.log('❌ Auth error:', data.message);
+                    showToast('❌ ' + data.message);
+                    break;
+
                 case 'user_status':
-                    console.log(`📡 User status: ${data.username} is ${data.status}`);
+                    console.log(`📡 ${data.username} is ${data.status}`);
                     if (data.status === 'online') {
                         onlineUsers.add(data.userId);
                     } else {
@@ -787,20 +802,18 @@
                     break;
 
                 case 'private_message':
-                    console.log(`💬 New private message from ${data.senderName}`);
+                    console.log(`💬 Private message from ${data.senderName}`);
                     if (currentChat && currentChat.type === 'user' && currentChat.id === data.senderId) {
                         addMessageToChat(data, false);
                     }
-                    // Add to chat list
                     updateChatList();
-                    // Show notification
                     if (data.senderId !== currentUser?.id) {
                         showToast(`💬 ${data.senderName}: ${data.content}`);
                     }
                     break;
 
                 case 'group_message':
-                    console.log(`💬 New group message from ${data.senderName}`);
+                    console.log(`💬 Group message from ${data.senderName}`);
                     if (currentChat && currentChat.type === 'group' && currentChat.id === data.groupId) {
                         addMessageToChat(data, false);
                     }
@@ -813,16 +826,9 @@
                 case 'typing':
                     if (currentChat && currentChat.type === 'user' && currentChat.id === data.userId) {
                         if (data.isTyping) {
-                            typingIndicator.textContent = `${data.username || 'Someone'} is typing...`;
-                            typingIndicator.classList.add('active');
-                        } else {
-                            typingIndicator.classList.remove('active');
+                            showToast(`✏️ ${data.username || 'Someone'} is typing...`);
                         }
                     }
-                    break;
-
-                case 'message_delivered':
-                    console.log('✅ Message delivered');
                     break;
 
                 case 'error':
@@ -831,7 +837,7 @@
             }
         }
 
-        // ----- API Calls -----
+        // API Calls
         async function apiCall(endpoint, options = {}) {
             const headers = {
                 'Content-Type': 'application/json',
@@ -851,7 +857,7 @@
             return response.json();
         }
 
-        // ----- Auth -----
+        // Auth
         async function login(username, password) {
             try {
                 const data = await apiCall('/api/login', {
@@ -906,7 +912,7 @@
             showLoginScreen();
         }
 
-        // ----- UI Navigation -----
+        // UI Navigation
         function showApp() {
             loginScreen.style.display = 'none';
             chatUi.classList.add('active');
@@ -923,7 +929,7 @@
             messagesContainer.innerHTML = '';
         }
 
-        // ----- Load Chats -----
+        // Load Chats
         async function loadChats() {
             try {
                 const friendsData = await apiCall(`/api/users/${currentUser.id}/friends`);
@@ -952,10 +958,11 @@
                 updateChatList();
             } catch (error) {
                 console.error('Load chats error:', error);
+                showToast('❌ Failed to load chats');
             }
         }
 
-        // ----- Update Chat List -----
+        // Update Chat List
         function updateChatList() {
             if (!chats.length) {
                 chatList.innerHTML = `
@@ -975,14 +982,14 @@
                         <p>${chat.lastMessage || 'Tap to chat'}</p>
                     </div>
                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                        ${chat.online ? '<span class="status-dot online"></span>' : '<span class="status-dot offline"></span>'}
+                        ${chat.online ? '🟢' : '⚪'}
                         <span class="chat-time">${chat.lastTime || ''}</span>
                     </div>
                 </div>
             `).join('');
         }
 
-        // ----- Open Chat -----
+        // Open Chat
         window.openChat = function(type, id) {
             const chat = chats.find(c => c.type === type && c.id === id);
             if (!chat) return;
@@ -1014,7 +1021,7 @@
             }
         }
 
-        // ----- Load Messages -----
+        // Load Messages
         async function loadMessages(type, id) {
             try {
                 let endpoint;
@@ -1039,10 +1046,11 @@
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             } catch (error) {
                 console.error('Load messages error:', error);
+                showToast('❌ Failed to load messages');
             }
         }
 
-        // ----- Add Message to Chat View -----
+        // Add Message to Chat View
         function addMessageToChat(msg, isSent) {
             const emptyState = messagesContainer.querySelector('div[style]');
             if (emptyState) emptyState.remove();
@@ -1082,14 +1090,16 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // ----- Send Message -----
+        // Send Message
         function sendMessage() {
             const text = messageInput.value.trim();
-            if (!text || !currentChat || !ws || ws.readyState !== WebSocket.OPEN) {
-                if (!ws || ws.readyState !== WebSocket.OPEN) {
-                    showToast('❌ Not connected to server');
-                    connectWebSocket();
-                }
+            if (!text || !currentChat) {
+                return;
+            }
+            
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showToast('❌ Not connected to server');
+                connectWebSocket();
                 return;
             }
 
@@ -1116,7 +1126,7 @@
             messageInput.value = '';
         }
 
-        // ----- Send File -----
+        // Send File
         async function sendFile(file) {
             if (!currentChat || !ws || ws.readyState !== WebSocket.OPEN) {
                 showToast('❌ Not connected');
@@ -1164,7 +1174,7 @@
             }
         }
 
-        // ----- Search Users -----
+        // Search Users
         searchInput.addEventListener('input', async function() {
             const query = this.value.trim();
             if (query.length < 2) {
@@ -1219,7 +1229,7 @@
             openChat('user', userId);
         };
 
-        // ----- Event Listeners -----
+        // Event Listeners
         loginBtn.addEventListener('click', () => {
             login(loginUsername.value.trim(), loginPassword.value.trim());
         });
@@ -1271,7 +1281,7 @@
             if (e.key === 'Enter') registerBtn.click();
         });
 
-        // ----- Auto-login on page load -----
+        // Auto-login
         (function init() {
             const savedToken = localStorage.getItem('chitchat_token');
             const savedUser = localStorage.getItem('chitchat_user');
@@ -1283,8 +1293,8 @@
         })();
 
         console.log('💕 ChitChat loaded!');
-        console.log('🔑 Features: Private messages, Groups, File sharing, Persistent login');
-        console.log('👥 Online users will show as 🟢');
+        console.log('🔑 Using API:', API_URL);
+        console.log('📡 Using WS:', WS_URL);
 
     })();
 </script>
