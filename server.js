@@ -14,14 +14,7 @@ const db = require('./database');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ 
-    server,
-    // Handle upgrade requests
-    verifyClient: (info, cb) => {
-        // Allow all connections - we'll handle auth in the message
-        cb(true);
-    }
-});
+const wss = new WebSocket.Server({ server });
 
 // Middleware
 app.use(cors());
@@ -47,14 +40,6 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     limits: { fileSize: 10 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type'), false);
-        }
-    }
 });
 
 // Initialize database
@@ -62,14 +47,13 @@ db.initDatabase();
 db.createTables();
 
 // Store WebSocket connections
-const clients = new Map();
+const clients = new Map(); // userId -> WebSocket
 const onlineUsers = new Set();
+const userNames = new Map(); // userId -> username
 
 wss.on('connection', (ws) => {
     console.log('🔗 New WebSocket connection');
     let userId = null;
-    let username = null;
-    let isAuthenticated = false;
 
     ws.on('message', async (message) => {
         try {
@@ -78,11 +62,11 @@ wss.on('connection', (ws) => {
 
             // Handle authentication
             if (data.type === 'auth') {
-                console.log('🔐 Auth attempt with token:', data.token ? 'Token present' : 'No token');
+                console.log('🔐 Auth attempt');
                 
                 if (!data.token) {
                     ws.send(JSON.stringify({
-                        type: 'auth_error',
+                        type: 'error',
                         message: 'No token provided'
                     }));
                     return;
@@ -91,27 +75,26 @@ wss.on('connection', (ws) => {
                 try {
                     const decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'secret');
                     userId = decoded.userId;
-                    username = decoded.username || 'User';
                     
                     // Store connection
                     clients.set(userId, ws);
                     onlineUsers.add(userId);
-                    isAuthenticated = true;
+                    userNames.set(userId, decoded.username || 'User');
                     
-                    console.log(`✅ User ${username} (${userId}) authenticated`);
+                    console.log(`✅ User ${decoded.username} (${userId}) authenticated`);
                     
-                    // Send auth success
+                    // Send auth success with online users list
                     ws.send(JSON.stringify({
                         type: 'auth_success',
-                        user: { id: userId, username: username },
+                        user: { id: userId, username: decoded.username },
                         onlineUsers: Array.from(onlineUsers)
                     }));
                     
-                    // Broadcast online status to ALL connected clients
+                    // Broadcast online status to ALL clients
                     broadcastToAll({
                         type: 'user_status',
                         userId: userId,
-                        username: username,
+                        username: decoded.username,
                         status: 'online',
                         onlineUsers: Array.from(onlineUsers)
                     });
@@ -119,17 +102,16 @@ wss.on('connection', (ws) => {
                 } catch (error) {
                     console.error('❌ Auth error:', error.message);
                     ws.send(JSON.stringify({
-                        type: 'auth_error',
-                        message: 'Invalid token: ' + error.message
+                        type: 'error',
+                        message: 'Invalid token'
                     }));
                     ws.close();
                 }
                 return;
             }
 
-            // Handle all other messages - require authentication
-            if (!isAuthenticated) {
-                console.log('⚠️ Unauthenticated message received');
+            // All other messages require authentication
+            if (!userId || !clients.has(userId)) {
                 ws.send(JSON.stringify({
                     type: 'error',
                     message: 'Not authenticated'
@@ -140,8 +122,9 @@ wss.on('connection', (ws) => {
             // Handle different message types
             switch(data.type) {
                 case 'private_message':
-                    console.log(`💬 Private message from ${username} to ${data.receiverId}`);
+                    console.log(`💬 Private message from ${userId} to ${data.receiverId}: "${data.content}"`);
                     
+                    // Save to database
                     const savedMsg = await db.saveMessage(
                         userId,
                         data.receiverId,
@@ -153,18 +136,25 @@ wss.on('connection', (ws) => {
                     );
                     
                     if (savedMsg) {
+                        const senderName = userNames.get(userId) || 'User';
                         const messageData = {
                             type: 'private_message',
                             id: savedMsg.id,
                             senderId: userId,
-                            senderName: username,
+                            senderName: senderName,
                             receiverId: data.receiverId,
                             content: data.content,
-                            fileUrl: data.fileUrl,
-                            fileType: data.fileType,
+                            fileUrl: data.fileUrl || null,
+                            fileType: data.fileType || null,
                             messageType: data.messageType || 'text',
                             created_at: savedMsg.created_at
                         };
+                        
+                        // Send to sender (delivery confirmation)
+                        ws.send(JSON.stringify({
+                            ...messageData,
+                            delivered: true
+                        }));
                         
                         // Send to receiver if online
                         const receiverWs = clients.get(data.receiverId);
@@ -174,17 +164,11 @@ wss.on('connection', (ws) => {
                         } else {
                             console.log(`⚠️ Receiver ${data.receiverId} is offline`);
                         }
-                        
-                        // Send back to sender
-                        ws.send(JSON.stringify({
-                            ...messageData,
-                            delivered: true
-                        }));
                     }
                     break;
 
                 case 'group_message':
-                    console.log(`💬 Group message from ${username} to group ${data.groupId}`);
+                    console.log(`💬 Group message from ${userId} to group ${data.groupId}: "${data.content}"`);
                     
                     const savedGroupMsg = await db.saveMessage(
                         userId,
@@ -197,20 +181,21 @@ wss.on('connection', (ws) => {
                     );
                     
                     if (savedGroupMsg) {
+                        const senderName = userNames.get(userId) || 'User';
                         const groupMessageData = {
                             type: 'group_message',
                             id: savedGroupMsg.id,
                             senderId: userId,
-                            senderName: username,
+                            senderName: senderName,
                             groupId: data.groupId,
                             content: data.content,
-                            fileUrl: data.fileUrl,
-                            fileType: data.fileType,
+                            fileUrl: data.fileUrl || null,
+                            fileType: data.fileType || null,
                             messageType: data.messageType || 'text',
                             created_at: savedGroupMsg.created_at
                         };
                         
-                        // Broadcast to all connected clients
+                        // Broadcast to ALL connected clients
                         broadcastToAll(groupMessageData);
                         console.log(`✅ Group message broadcast to all clients`);
                     }
@@ -222,26 +207,23 @@ wss.on('connection', (ws) => {
                         receiverWs.send(JSON.stringify({
                             type: 'typing',
                             userId: userId,
-                            username: username,
-                            receiverId: data.receiverId,
+                            username: userNames.get(userId) || 'User',
                             isTyping: data.isTyping
                         }));
                     }
                     break;
 
                 case 'logout':
-                    if (userId) {
-                        onlineUsers.delete(userId);
-                        clients.delete(userId);
-                        broadcastToAll({
-                            type: 'user_status',
-                            userId: userId,
-                            username: username,
-                            status: 'offline',
-                            onlineUsers: Array.from(onlineUsers)
-                        });
-                        console.log(`👋 User ${username} logged out`);
-                    }
+                    console.log(`👋 User ${userId} logged out`);
+                    onlineUsers.delete(userId);
+                    clients.delete(userId);
+                    broadcastToAll({
+                        type: 'user_status',
+                        userId: userId,
+                        username: userNames.get(userId) || 'User',
+                        status: 'offline',
+                        onlineUsers: Array.from(onlineUsers)
+                    });
                     break;
 
                 default:
@@ -251,7 +233,7 @@ wss.on('connection', (ws) => {
             console.error('❌ WebSocket error:', error);
             ws.send(JSON.stringify({
                 type: 'error',
-                message: 'Server error: ' + error.message
+                message: 'Server error'
             }));
         }
     });
@@ -263,16 +245,12 @@ wss.on('connection', (ws) => {
             broadcastToAll({
                 type: 'user_status',
                 userId: userId,
-                username: username || 'Unknown',
+                username: userNames.get(userId) || 'User',
                 status: 'offline',
                 onlineUsers: Array.from(onlineUsers)
             });
-            console.log(`🔌 User ${username || userId} disconnected`);
+            console.log(`🔌 User ${userId} disconnected`);
         }
-    });
-
-    ws.on('error', (error) => {
-        console.error('❌ WebSocket error:', error);
     });
 });
 
@@ -573,6 +551,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`💕 ChitChat Server Ready`);
-    console.log(`📡 WebSocket server running on ws://localhost:${PORT}`);
-    console.log(`👥 JWT Secret: ${process.env.JWT_SECRET ? 'Set ✅' : 'Using default ⚠️'}`);
+    console.log(`📡 WebSocket server running`);
 });
