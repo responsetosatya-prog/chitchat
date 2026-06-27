@@ -47,9 +47,7 @@ db.initDatabase();
 db.createTables();
 
 // Store WebSocket connections
-const clients = new Map(); // userId -> WebSocket
-const onlineUsers = new Set();
-const userNames = new Map(); // userId -> username
+const clients = new Map(); // userId -> { ws, username }
 
 wss.on('connection', (ws) => {
     console.log('🔗 New WebSocket connection');
@@ -76,18 +74,20 @@ wss.on('connection', (ws) => {
                     const decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'secret');
                     userId = decoded.userId;
                     
-                    // Store connection
-                    clients.set(userId, ws);
-                    onlineUsers.add(userId);
-                    userNames.set(userId, decoded.username || 'User');
+                    // Store connection with username
+                    clients.set(userId, {
+                        ws: ws,
+                        username: decoded.username || 'User'
+                    });
                     
                     console.log(`✅ User ${decoded.username} (${userId}) authenticated`);
+                    console.log(`👥 Total connected clients: ${clients.size}`);
                     
-                    // Send auth success with online users list
+                    // Send auth success
                     ws.send(JSON.stringify({
                         type: 'auth_success',
                         user: { id: userId, username: decoded.username },
-                        onlineUsers: Array.from(onlineUsers)
+                        onlineUsers: Array.from(clients.keys())
                     }));
                     
                     // Broadcast online status to ALL clients
@@ -96,7 +96,7 @@ wss.on('connection', (ws) => {
                         userId: userId,
                         username: decoded.username,
                         status: 'online',
-                        onlineUsers: Array.from(onlineUsers)
+                        onlineUsers: Array.from(clients.keys())
                     });
                     
                 } catch (error) {
@@ -122,7 +122,9 @@ wss.on('connection', (ws) => {
             // Handle different message types
             switch(data.type) {
                 case 'private_message':
-                    console.log(`💬 Private message from ${userId} to ${data.receiverId}: "${data.content}"`);
+                    const senderName = clients.get(userId)?.username || 'User';
+                    console.log(`💬 Private message from ${senderName} (${userId}) to ${data.receiverId}: "${data.content}"`);
+                    console.log(`📤 Sending to receiver...`);
                     
                     // Save to database
                     const savedMsg = await db.saveMessage(
@@ -136,7 +138,6 @@ wss.on('connection', (ws) => {
                     );
                     
                     if (savedMsg) {
-                        const senderName = userNames.get(userId) || 'User';
                         const messageData = {
                             type: 'private_message',
                             id: savedMsg.id,
@@ -157,18 +158,24 @@ wss.on('connection', (ws) => {
                         }));
                         
                         // Send to receiver if online
-                        const receiverWs = clients.get(data.receiverId);
-                        if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
-                            receiverWs.send(JSON.stringify(messageData));
+                        const receiver = clients.get(data.receiverId);
+                        if (receiver) {
+                            console.log(`📤 Found receiver ${data.receiverId}, sending message...`);
+                            receiver.ws.send(JSON.stringify(messageData));
                             console.log(`✅ Message sent to ${data.receiverId}`);
                         } else {
                             console.log(`⚠️ Receiver ${data.receiverId} is offline`);
+                            ws.send(JSON.stringify({
+                                type: 'error',
+                                message: 'User is offline'
+                            }));
                         }
                     }
                     break;
 
                 case 'group_message':
-                    console.log(`💬 Group message from ${userId} to group ${data.groupId}: "${data.content}"`);
+                    const groupSenderName = clients.get(userId)?.username || 'User';
+                    console.log(`💬 Group message from ${groupSenderName} to group ${data.groupId}: "${data.content}"`);
                     
                     const savedGroupMsg = await db.saveMessage(
                         userId,
@@ -181,12 +188,11 @@ wss.on('connection', (ws) => {
                     );
                     
                     if (savedGroupMsg) {
-                        const senderName = userNames.get(userId) || 'User';
                         const groupMessageData = {
                             type: 'group_message',
                             id: savedGroupMsg.id,
                             senderId: userId,
-                            senderName: senderName,
+                            senderName: groupSenderName,
                             groupId: data.groupId,
                             content: data.content,
                             fileUrl: data.fileUrl || null,
@@ -202,12 +208,12 @@ wss.on('connection', (ws) => {
                     break;
 
                 case 'typing':
-                    const receiverWs = clients.get(data.receiverId);
-                    if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
-                        receiverWs.send(JSON.stringify({
+                    const typingReceiver = clients.get(data.receiverId);
+                    if (typingReceiver) {
+                        typingReceiver.ws.send(JSON.stringify({
                             type: 'typing',
                             userId: userId,
-                            username: userNames.get(userId) || 'User',
+                            username: clients.get(userId)?.username || 'User',
                             isTyping: data.isTyping
                         }));
                     }
@@ -215,14 +221,13 @@ wss.on('connection', (ws) => {
 
                 case 'logout':
                     console.log(`👋 User ${userId} logged out`);
-                    onlineUsers.delete(userId);
                     clients.delete(userId);
                     broadcastToAll({
                         type: 'user_status',
                         userId: userId,
-                        username: userNames.get(userId) || 'User',
+                        username: clients.get(userId)?.username || 'User',
                         status: 'offline',
-                        onlineUsers: Array.from(onlineUsers)
+                        onlineUsers: Array.from(clients.keys())
                     });
                     break;
 
@@ -233,35 +238,43 @@ wss.on('connection', (ws) => {
             console.error('❌ WebSocket error:', error);
             ws.send(JSON.stringify({
                 type: 'error',
-                message: 'Server error'
+                message: 'Server error: ' + error.message
             }));
         }
     });
 
     ws.on('close', () => {
         if (userId) {
-            onlineUsers.delete(userId);
+            const username = clients.get(userId)?.username || 'User';
             clients.delete(userId);
             broadcastToAll({
                 type: 'user_status',
                 userId: userId,
-                username: userNames.get(userId) || 'User',
+                username: username,
                 status: 'offline',
-                onlineUsers: Array.from(onlineUsers)
+                onlineUsers: Array.from(clients.keys())
             });
-            console.log(`🔌 User ${userId} disconnected`);
+            console.log(`🔌 User ${username} (${userId}) disconnected`);
+            console.log(`👥 Total connected clients: ${clients.size}`);
         }
+    });
+
+    ws.on('error', (error) => {
+        console.error('❌ WebSocket error:', error);
     });
 });
 
 // Broadcast to all connected clients
 function broadcastToAll(data) {
     const message = JSON.stringify(data);
+    let sentCount = 0;
     clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(message);
+        if (client.ws.readyState === WebSocket.OPEN) {
+            client.ws.send(message);
+            sentCount++;
         }
     });
+    console.log(`📡 Broadcast sent to ${sentCount} clients`);
 }
 
 // REST API Routes
@@ -395,7 +408,7 @@ app.get('/api/users/search', async (req, res) => {
         const users = await db.searchUsers(q);
         const usersWithStatus = users.map(u => ({
             ...u,
-            online: onlineUsers.has(u.id)
+            online: clients.has(u.id)
         }));
         res.json({ users: usersWithStatus });
     } catch (error) {
@@ -413,7 +426,7 @@ app.get('/api/users/:id', async (req, res) => {
         res.json({ 
             user: {
                 ...user,
-                online: onlineUsers.has(user.id)
+                online: clients.has(user.id)
             }
         });
     } catch (error) {
@@ -427,7 +440,7 @@ app.get('/api/users/:id/friends', async (req, res) => {
         const friends = await db.getFriends(req.params.id);
         const friendsWithStatus = friends.map(f => ({
             ...f,
-            online: onlineUsers.has(f.id)
+            online: clients.has(f.id)
         }));
         res.json({ friends: friendsWithStatus });
     } catch (error) {
@@ -532,8 +545,8 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 // Get online users
 app.get('/api/online-users', (req, res) => {
     res.json({ 
-        onlineUsers: Array.from(onlineUsers),
-        count: onlineUsers.size
+        onlineUsers: Array.from(clients.keys()),
+        count: clients.size
     });
 });
 
@@ -541,7 +554,7 @@ app.get('/api/online-users', (req, res) => {
 app.get('/health', (req, res) => {
     res.json({
         status: 'online',
-        onlineUsers: onlineUsers.size,
+        onlineUsers: clients.size,
         connections: clients.size,
         timestamp: new Date().toISOString()
     });
@@ -551,5 +564,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`💕 ChitChat Server Ready`);
-    console.log(`📡 WebSocket server running`);
+    console.log(`📡 WebSocket server running on ws://localhost:${PORT}`);
 });
