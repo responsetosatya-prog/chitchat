@@ -1,8 +1,5 @@
 # Node modules
 node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
 
 # Environment variables
 .env
@@ -23,7 +20,7 @@ Thumbs.db
 *.swp
 *.swo
 
-# Build files
+# Build
 dist/
 build/
 *.log
