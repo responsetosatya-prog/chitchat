@@ -14,20 +14,13 @@ app.use(express.json());
 const pool = db.initDatabase();
 db.createTables();
 
-// COUPLE'S CREDENTIALS - CHANGE THESE!
-// Option 1: Use environment variables (recommended)
+// COUPLE'S CREDENTIALS
 const COUPLE_CREDENTIALS = {
     username: process.env.COUPLE_USERNAME || 'love',
     password: process.env.COUPLE_PASSWORD || 'iloveyou2024'
 };
 
-// Option 2: Hardcode (if you prefer)
-// const COUPLE_CREDENTIALS = {
-//     username: 'your_username',  // Change this
-//     password: 'your_password'   // Change this
-// };
-
-// Generate a unique room code for the couple
+// Generate a unique room code
 function generateCoupleRoom() {
     return 'LOVE' + crypto.randomBytes(2).toString('hex').toUpperCase();
 }
@@ -179,15 +172,17 @@ wss.on('connection', (ws, req) => {
                         [roomCode]
                     );
 
+                    // If room doesn't exist, CREATE IT
                     if (roomExists.rows.length === 0) {
-                        ws.send(JSON.stringify({
-                            type: 'error',
-                            message: 'Room not found. Please create one first.'
-                        }));
-                        return;
+                        console.log(`🆕 Creating new room: ${roomCode}`);
+                        await db.getPool().query(
+                            `INSERT INTO rooms (room_code, expires_at) 
+                             VALUES ($1, NOW() + INTERVAL '24 hours')`,
+                            [roomCode]
+                        );
                     }
 
-                    // Add to room
+                    // Add to WebSocket room
                     if (!rooms.has(roomCode)) {
                         rooms.set(roomCode, new Set());
                     }
