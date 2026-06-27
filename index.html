@@ -61,6 +61,20 @@
             font-size: 14px;
         }
 
+        .login-screen .room-code-display {
+            text-align: center;
+            background: rgba(255, 107, 157, 0.1);
+            padding: 10px;
+            border-radius: 60px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 107, 157, 0.1);
+            font-family: monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff8fb3;
+            letter-spacing: 4px;
+        }
+
         .login-screen input {
             width: 100%;
             padding: 14px 18px;
@@ -384,10 +398,16 @@
         <h1>Our Private Chat</h1>
         <div class="sub">Just for you and me ❤️</div>
 
+        <!-- Show the room code -->
+        <div class="room-code-display" id="roomCodeDisplay">LOVE123</div>
+
         <input type="text" id="usernameInput" placeholder="Username" value="love" />
         <input type="password" id="passwordInput" placeholder="Password" value="iloveyou2024" />
         <button class="login-btn" id="loginBtn">💕 Enter Our World</button>
         <div class="error" id="loginError"></div>
+        <div style="text-align: center; margin-top: 15px; font-size: 12px; color: #5d6b8a;">
+            Share this room code with your partner: <strong style="color: #ff8fb3;">LOVE123</strong>
+        </div>
     </div>
 
     <!-- CHAT APP -->
@@ -432,6 +452,7 @@
         const loginBtn = document.getElementById('loginBtn');
         const loginError = document.getElementById('loginError');
         const roomDisplay = document.getElementById('roomDisplay');
+        const roomCodeDisplay = document.getElementById('roomCodeDisplay');
         const messageContainer = document.getElementById('messageContainer');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
@@ -447,6 +468,15 @@
 
         // ⚠️ IMPORTANT: Your Render backend URL
         const DEFAULT_SERVER = 'wss://chitchat-backend-61t4.onrender.com';
+
+        // FIXED ROOM CODE - Same for both of you!
+        const ROOM_CODE = 'LOVE123';
+
+        // Display the room code
+        roomCodeDisplay.textContent = ROOM_CODE;
+
+        // Expose ws for console testing
+        window.ws = ws;
 
         // ----- Floating hearts -----
         function createHearts() {
@@ -472,6 +502,7 @@
         }
 
         function addMessage(text, sender, time) {
+            console.log('📝 Adding message:', { text, sender, time });
             const div = document.createElement('div');
             
             if (sender === 'system') {
@@ -515,10 +546,10 @@
             
             try {
                 ws = new WebSocket(wsUrl);
+                window.ws = ws;
 
                 ws.onopen = () => {
                     console.log('✅ WebSocket connected, sending auth...');
-                    // Send authentication first
                     ws.send(JSON.stringify({
                         type: 'auth',
                         username: usernameInput.value.trim(),
@@ -535,7 +566,6 @@
                             case 'auth_success':
                                 console.log('✅ Auth successful!');
                                 setConnectionStatus(true);
-                                // Now join the room
                                 ws.send(JSON.stringify({
                                     type: 'join',
                                     roomCode: roomCode,
@@ -547,7 +577,6 @@
                                 console.log('❌ Auth error:', data.message);
                                 showLoginError(data.message);
                                 setConnectionStatus(false);
-                                ws.close();
                                 break;
                                 
                             case 'joined':
@@ -569,6 +598,7 @@
                                 break;
                                 
                             case 'message':
+                                console.log('💬 New message:', data.text, 'from:', data.sender);
                                 addMessage(data.text, data.sender, data.time);
                                 break;
                                 
@@ -611,6 +641,7 @@
                 ws.close();
             }
             ws = null;
+            window.ws = null;
             currentRoom = null;
             chatApp.classList.add('hidden');
             loginScreen.style.display = 'block';
@@ -633,14 +664,14 @@
             loginBtn.disabled = true;
             loginBtn.textContent = 'Connecting... 💕';
             
-            const roomCode = 'LOVE' + Math.floor(100 + Math.random() * 900);
-            userName = '💕 Partner';
+            userName = username === 'love' ? '💕 Partner' : username;
             
             loginScreen.style.display = 'none';
             chatApp.classList.remove('hidden');
             setConnectionStatus(false);
             
-            connectToRoom(roomCode, userName);
+            // Use FIXED room code
+            connectToRoom(ROOM_CODE, userName);
             
             loginBtn.disabled = false;
             loginBtn.textContent = '💕 Enter Our World';
@@ -652,14 +683,34 @@
 
         sendBtn.addEventListener('click', () => {
             const text = messageInput.value.trim();
-            if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+            console.log('📤 Send button clicked. Text:', text, 'WS State:', ws ? ws.readyState : 'null');
             
+            if (!text) {
+                console.log('❌ Empty message');
+                return;
+            }
+            
+            if (!ws) {
+                console.log('❌ No WebSocket connection');
+                return;
+            }
+            
+            if (ws.readyState !== WebSocket.OPEN) {
+                console.log('❌ WebSocket not open. State:', ws.readyState);
+                return;
+            }
+            
+            // Add message to UI immediately (optimistic)
+            addMessage(text, userName, new Date().toLocaleTimeString());
+            
+            // Send to server
             ws.send(JSON.stringify({
                 type: 'message',
                 text: text,
                 time: new Date().toLocaleTimeString()
             }));
             
+            console.log('✅ Message sent');
             messageInput.value = '';
             messageInput.focus();
         });
@@ -676,6 +727,8 @@
         console.log('💕 Private chat for two!');
         console.log('📡 Backend URL:', DEFAULT_SERVER);
         console.log('🔑 Default credentials: love / iloveyou2024');
+        console.log('🏠 Room Code:', ROOM_CODE, '(FIXED - use this for both)');
+        console.log('📝 Type messages and watch the console for debugging');
     </script>
 </body>
 </html>
