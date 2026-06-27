@@ -1,19 +1,12 @@
-# Private Chat Frontend
-
-The client-side interface for the private chat application.
+# 💕 Frontend - Private Chat
 
 ## Deployment on GitHub Pages
 
+### Step 1: Create GitHub Repository
 1. Create a new repository on GitHub
-2. Upload these files to the repository
-3. Go to Settings > Pages
-4. Select "Deploy from branch" (main branch)
-5. Click "Save"
+2. Upload all frontend files (index.html, README.md)
 
-Your frontend will be available at: `https://[username].github.io/[repo-name]`
-
-## Connecting to Backend
-
-1. Update the `DEFAULT_SERVER` variable in `index.html` to your Render backend URL:
-   ```javascript
-   const DEFAULT_SERVER = 'wss://your-backend.onrender.com';
+### Step 2: Update Server URL
+Before deploying, update the `DEFAULT_SERVER` variable in `index.html`:
+```javascript
+const DEFAULT_SERVER = 'wss://your-backend.onrender.com';
