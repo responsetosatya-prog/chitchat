@@ -385,7 +385,7 @@
         <div class="sub">Just for you and me ❤️</div>
 
         <input type="text" id="usernameInput" placeholder="Username" value="love" />
-        <input type="password" id="passwordInput" placeholder="Password" />
+        <input type="password" id="passwordInput" placeholder="Password" value="iloveyou2024" />
         <button class="login-btn" id="loginBtn">💕 Enter Our World</button>
         <div class="error" id="loginError"></div>
     </div>
@@ -444,8 +444,6 @@
         let ws = null;
         let currentRoom = null;
         let userName = '💕 Partner';
-        let reconnectAttempts = 0;
-        const MAX_RECONNECT_ATTEMPTS = 5;
 
         // ⚠️ IMPORTANT: Your Render backend URL
         const DEFAULT_SERVER = 'wss://chitchat-backend-61t4.onrender.com';
@@ -548,6 +546,7 @@
                             case 'auth_error':
                                 console.log('❌ Auth error:', data.message);
                                 showLoginError(data.message);
+                                setConnectionStatus(false);
                                 ws.close();
                                 break;
                                 
@@ -557,6 +556,7 @@
                                 roomDisplay.textContent = roomCode;
                                 userDisplay.textContent = `You: ${name}`;
                                 addMessage(`💕 ${data.message}`, 'system');
+                                setConnectionStatus(true);
                                 
                                 if (data.history && data.history.length > 0) {
                                     setTimeout(() => {
@@ -589,24 +589,17 @@
                     console.log('❌ WebSocket closed');
                     setConnectionStatus(false);
                     addMessage('❌ Disconnected from server', 'system');
-                    
-                    // Auto-reconnect
-                    if (currentRoom && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                        reconnectAttempts++;
-                        setTimeout(() => {
-                            addMessage(`🔄 Reconnecting... (attempt ${reconnectAttempts})`, 'system');
-                            connectToRoom(currentRoom, userName);
-                        }, 2000 * reconnectAttempts);
-                    }
                 };
 
                 ws.onerror = (error) => {
                     console.error('❌ WebSocket error:', error);
                     showLoginError('Connection failed. Check server URL.');
+                    setConnectionStatus(false);
                 };
             } catch (error) {
                 console.error('❌ Connection error:', error);
                 showLoginError('Failed to connect: ' + error.message);
+                setConnectionStatus(false);
             }
         }
 
@@ -619,13 +612,10 @@
             }
             ws = null;
             currentRoom = null;
-            reconnectAttempts = 0;
             chatApp.classList.add('hidden');
             loginScreen.style.display = 'block';
             messageContainer.innerHTML = '<div class="message message-system">💕 Welcome to your private space</div>';
             setConnectionStatus(false);
-            usernameInput.value = 'love';
-            passwordInput.value = '';
             loginBtn.disabled = false;
             loginBtn.textContent = '💕 Enter Our World';
         }
@@ -686,7 +676,6 @@
         console.log('💕 Private chat for two!');
         console.log('📡 Backend URL:', DEFAULT_SERVER);
         console.log('🔑 Default credentials: love / iloveyou2024');
-        console.log('⚠️ If you changed them, use your custom credentials');
     </script>
 </body>
 </html>
